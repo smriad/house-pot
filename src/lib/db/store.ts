@@ -18,6 +18,28 @@ type PantryMemoryDoc = PantryMemory & { embedding?: number[] };
 
 let mongoClient: MongoClient | null = null;
 let mongoDb: Db | null = null;
+/** After a failed connect, use local JSON so a bad Atlas URI does not 500 the app. */
+let mongoConnectFailed = false;
+
+async function mongoReady(): Promise<boolean> {
+  if (!hasMongo() || mongoConnectFailed) return false;
+  try {
+    await getMongo();
+    return true;
+  } catch {
+    mongoConnectFailed = true;
+    if (mongoClient) {
+      try {
+        await mongoClient.close();
+      } catch {
+        /* ignore */
+      }
+    }
+    mongoClient = null;
+    mongoDb = null;
+    return false;
+  }
+}
 
 async function readLocal(): Promise<LocalDb> {
   await fs.mkdir(LOCAL_DIR, { recursive: true });
@@ -73,7 +95,7 @@ export async function upsertHousehold(
     updatedAt: now,
   };
 
-  if (hasMongo()) {
+  if (await mongoReady()) {
     const db = await getMongo();
     const { createdAt, ...fields } = record;
     await householdsCol(db).updateOne(
@@ -96,7 +118,7 @@ export async function upsertHousehold(
 }
 
 export async function getHousehold(id: string): Promise<Household | null> {
-  if (hasMongo()) {
+  if (await mongoReady()) {
     const db = await getMongo();
     return householdsCol(db).findOne({ id });
   }
@@ -105,7 +127,7 @@ export async function getHousehold(id: string): Promise<Household | null> {
 }
 
 export async function saveRun(run: KitchenRun): Promise<void> {
-  if (hasMongo()) {
+  if (await mongoReady()) {
     const db = await getMongo();
     await runsCol(db).updateOne({ id: run.id }, { $set: run }, { upsert: true });
     return;
@@ -118,7 +140,7 @@ export async function saveRun(run: KitchenRun): Promise<void> {
 }
 
 export async function getRun(id: string): Promise<KitchenRun | null> {
-  if (hasMongo()) {
+  if (await mongoReady()) {
     const db = await getMongo();
     return runsCol(db).findOne({ id });
   }
@@ -130,7 +152,7 @@ export async function listRunsForHousehold(
   householdId: string,
   limit = 8,
 ): Promise<KitchenRun[]> {
-  if (hasMongo()) {
+  if (await mongoReady()) {
     const db = await getMongo();
     return runsCol(db)
       .find({ householdId })
@@ -159,7 +181,7 @@ export async function addPantryMemory(
     embedding: embedding ?? undefined,
     createdAt: new Date().toISOString(),
   };
-  if (hasMongo()) {
+  if (await mongoReady()) {
     const db = await getMongo();
     await memoriesCol(db).insertOne(entry);
     return;
@@ -173,7 +195,7 @@ export async function listMemories(
   householdId: string,
   limit = 20,
 ): Promise<PantryMemory[]> {
-  if (hasMongo()) {
+  if (await mongoReady()) {
     const db = await getMongo();
     return memoriesCol(db)
       .find({ householdId })
@@ -201,7 +223,7 @@ export async function searchMemories(
   const queryEmbedding = await embedText(query);
   const vectorIndex = process.env.MONGODB_VECTOR_INDEX?.trim();
 
-  if (hasMongo() && vectorIndex && queryEmbedding) {
+  if ((await mongoReady()) && vectorIndex && queryEmbedding) {
     try {
       const db = await getMongo();
       const vectorHits = await memoriesCol(db)
@@ -224,7 +246,7 @@ export async function searchMemories(
     }
   }
 
-  if (hasMongo()) {
+  if (await mongoReady()) {
     const db = await getMongo();
     const all = await memoriesCol(db)
       .find({ householdId })

@@ -24,7 +24,7 @@ Pantry history and allergies persist in **MongoDB Atlas** so “we always have l
 ## Demo
 
 <!-- Replace before publish -->
-- **Live:** `TODO_DEPLOY_URL` — [Deploy on Render (free)](https://github.com/smriad/house-pot#deploy-render--free-tier) (`render.yaml`, Groq + Atlas + ElevenLabs)
+- **Live:** https://house-pot.onrender.com/
 - **Local:** `npm run dev` → http://localhost:3000
 
 Short screen recording: propose → approve → narrate (30–60s). Judges need to see Amma tap approve.
