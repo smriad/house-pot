@@ -131,9 +131,99 @@ Use only if you accept a non-Gemma model on the live demo (e.g. `openai/gpt-oss-
 
 Hacktoberfest sponsor credits (Render, DigitalOcean) may be listed at [hacktoberfest.com/my/promos](https://hacktoberfest.com/my/promos).
 
-## DEV submission
+## Hacktoberfest submission (DEV)
 
-See `SUBMISSION.md` and your draft on DEV (edit before Monday 12:59 PM Asia/Dhaka).
+**Challenge:** [Hacktoberfest Weekend — Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)  
+**Canonical draft:** [`SUBMISSION.md`](./SUBMISSION.md) (copy into DEV when ready)
+
+### Before you publish
+
+- [ ] Live demo works: https://house-pot.onrender.com/ (wake Render if cold; first load can take ~1 min)
+- [ ] Short screen recording: pantry → propose → **Approve** → narrate (30–60s)
+- [ ] Public repo: https://github.com/smriad/house-pot
+- [ ] DEV post tags: `devchallenge`, `weekendchallenge`, `hf26challenge`
+- [ ] AI disclosure on DEV if you used AI to write the post ([DEV AI guidelines](https://dev.to/p/devteam/ai-content-policy-update-4g2d))
+- [ ] Friend quote after one real dinner (replace the placeholder in the template below)
+
+### Copy-paste template (DEV editor)
+
+Use this structure on DEV. Replace `TODO_*` and add your video embed.
+
+```markdown
+---
+title: "House Pot: dinner from the pantry, read aloud only after Amma approves"
+published: false
+tags: devchallenge, weekendchallenge, hf26challenge
+---
+
+*Submission for [Hacktoberfest Weekend: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)*
+
+## What I Built
+
+Amma is the person in our household who turns whatever is in the kitchen into dinner — without a recipe, and with one eye on who cannot eat peanuts or shellfish.
+
+**House Pot** answers: *what can we make with what we have, without forgetting the allergy, and without reading a wall of text while the rice burns?*
+
+She types or speaks the pantry. **Gemma** (open weights locally; hosted API on Render) proposes one recipe. The app checks safety in **code** (`pantry-check.ts`): ingredients marked in-kitchen vs missing; allergens block **Approve**. **ElevenLabs** reads steps only after she taps approve — recipe text only, never the voice note. **MongoDB Atlas** remembers household, pantry, and feedback.
+
+## Demo
+
+- **Live:** https://house-pot.onrender.com/
+- **Video:** TODO_DEMO_VIDEO_URL
+- **Try it:** propose a pot → read the card → **Approve & read aloud**
+
+## Code
+
+https://github.com/smriad/house-pot
+
+| Path | Role |
+| --- | --- |
+| `src/lib/gemma.ts` | OpenAI-compatible JSON recipes + critic/brief |
+| `src/lib/kitchen/pantry-check.ts` | Pantry match + allergy gate |
+| `src/lib/kitchen/orchestrator.ts` | Propose → check → approve → narrate |
+| `src/lib/mastra/kitchen-workflow.ts` | Approval suspend when Mastra storage is up |
+| `src/components/HousePotApp.tsx` | Mobile-first kitchen UI |
+
+## How I Built It
+
+| Layer | Choice |
+| --- | --- |
+| **Gemma** | Meal planning; local `gemma3:4b` (Ollama) or Gemma/Gemini via AI Studio on Render (`GEMMA_*`) |
+| **Pantry safety** | Deterministic checks + Open Food Facts allergen tags |
+| **MongoDB Atlas** | Household + run history + pantry memory |
+| **Mastra** | Human-in-the-loop approval workflow |
+| **ElevenLabs** | Post-approval narration (idempotent narrate step) |
+| **Render** | `render.yaml`, `/api/health`, GitHub Actions smoke |
+
+```text
+pantry → memory (Mongo) → Gemma propose → code pantry/allergy check
+  → cook approves → ElevenLabs narrates approved text only
+```
+
+## Why Does Open Innovation Matter?
+
+Allergies and what is actually at home are the sensitive inputs. Open-weight **Gemma** can run on hardware we control; the hosted demo uses the same client against a cloud endpoint so judges can try the flow from a phone. **ElevenLabs** is deliberately behind the approval gate — closed voice, minimal cloud touch.
+
+## Prize categories
+
+- **Best Use of Gemma** — structured recipes from pantry + constraints
+- **Best Use of MongoDB Atlas** — household and pantry memory across runs
+- **Best Use of ElevenLabs** — narration only after explicit approve
+- **Best Use of Render** — production URL above + CI deploy hook (optional `RENDER_DEPLOY_HOOK`)
+
+## Friend quote
+
+> TODO_FRIEND_QUOTE — one sentence from Amma after trying a real dinner.
+
+---
+
+*Built for Hacktoberfest Weekend 2026 — Build for a Friend.*
+```
+
+### Enter on DEV
+
+1. Open the [challenge page](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01) and **Submit** / link your post when published.
+2. Keep `SUBMISSION.md` in sync with the live post for reviewers cloning the repo.
 
 ## License
 
