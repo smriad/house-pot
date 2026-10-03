@@ -199,8 +199,19 @@ export async function narrateKitchenRun(
   const run = await getRun(runId);
   if (!run) throw new Error("Run not found");
   if (!run.proposal) throw new Error("No recipe proposal on this run");
-  if (run.status !== "approved" && run.status !== "narrated") {
+  const cookApproved = run.trace.some(
+    (t) => t.step === "approve" && t.detail.includes("approved"),
+  );
+  if (
+    run.status !== "approved" &&
+    run.status !== "narrated" &&
+    !(run.status === "failed" && cookApproved)
+  ) {
     throw new Error("Run must be approved before narration");
+  }
+  if (run.status === "failed" && cookApproved) {
+    run.status = "approved";
+    await saveRun(run);
   }
 
   if (

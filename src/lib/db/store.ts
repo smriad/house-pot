@@ -126,6 +126,25 @@ export async function getRun(id: string): Promise<KitchenRun | null> {
   return local.runs.find((r) => r.id === id) ?? null;
 }
 
+export async function listRunsForHousehold(
+  householdId: string,
+  limit = 8,
+): Promise<KitchenRun[]> {
+  if (hasMongo()) {
+    const db = await getMongo();
+    return runsCol(db)
+      .find({ householdId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+  }
+  const local = await readLocal();
+  return local.runs
+    .filter((r) => r.householdId === householdId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, limit);
+}
+
 export async function addPantryMemory(
   householdId: string,
   text: string,

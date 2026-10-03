@@ -3,8 +3,29 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Household, KitchenRun, PantryMemory, Recipe } from "@/lib/types";
 import IntegrationsPanel from "@/components/IntegrationsPanel";
+import KitchenProgress from "@/components/KitchenProgress";
 
 const STORAGE_KEY = "house-pot-household-id";
+const RUN_STORAGE_KEY = "house-pot-last-run-id";
+
+function runStatusLabel(status: KitchenRun["status"]): string {
+  switch (status) {
+    case "awaiting_approval":
+      return "Awaiting cook approval";
+    case "approved":
+      return "Approved — ready to narrate";
+    case "narrated":
+      return "Narrated";
+    case "failed":
+      return "Step failed — you can retry below";
+    default:
+      return status;
+  }
+}
+
+function cookApprovedRun(run: KitchenRun): boolean {
+  return run.trace.some((t) => t.step === "approve" && t.detail.includes("approved"));
+}
 
 type SpeechRecognitionCtor = new () => {
   lang: string;
@@ -64,6 +85,7 @@ export default function HousePotApp() {
   const [household, setHousehold] = useState<Household | null>(null);
   const [cookName, setCookName] = useState("Amma");
   const [allergies, setAllergies] = useState("peanuts, shellfish");
+  const [dislikes, setDislikes] = useState("very spicy");
   const [pantry, setPantry] = useState(
     "red lentils, onion, garlic, rice, cumin, spinach, yogurt",
   );
@@ -79,6 +101,9 @@ export default function HousePotApp() {
   const [recording, setRecording] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [runHistory, setRunHistory] = useState<KitchenRun[]>([]);
+  const [copiedRecipe, setCopiedRecipe] = useState(false);
+  const [hydrating, setHydrating] = useState(true);
 
   const audioUrl = useMemo(() => {
     if (!run?.audioBase64) return null;
@@ -101,7 +126,10 @@ export default function HousePotApp() {
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
-      dislikes: [],
+      dislikes: dislikes
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
       favoriteCuisines: ["South Asian", "comfort"],
       notes: "Built for Hacktoberfest Weekend — Build for a Friend",
     };
@@ -119,16 +147,56 @@ export default function HousePotApp() {
       .then((j) => setPantryMemories(j.memories ?? []))
       .catch(() => setPantryMemories([]));
     return h;
-  }, [allergies, cookName]);
+  }, [allergies, cookName, dislikes]);
+
+  const persistRun = useCallback((next: KitchenRun) => {
+    setRun(next);
+    localStorage.setItem(RUN_STORAGE_KEY, next.id);
+  }, []);
+
+  const loadRunById = useCallback(async (runId: string) => {
+    const res = await fetch(`/api/runs/${runId}`);
+    if (!res.ok) return;
+    const data = (await res.json()) as KitchenRun;
+    persistRun(data);
+  }, [persistRun]);
+
+  const refreshRunHistory = useCallback(async (householdId: string) => {
+    const res = await fetch(`/api/household/${householdId}/runs`);
+    if (!res.ok) return;
+    const j = (await res.json()) as { runs: KitchenRun[] };
+    setRunHistory(j.runs ?? []);
+  }, []);
 
   useEffect(() => {
     const id = localStorage.getItem(STORAGE_KEY);
-    if (!id) return;
-    void fetch(`/api/household/${id}/memories`)
-      .then((r) => r.json())
-      .then((j) => setPantryMemories(j.memories ?? []))
-      .catch(() => setPantryMemories([]));
-  }, []);
+    if (!id) {
+      setHydrating(false);
+      return;
+    }
+    void (async () => {
+      try {
+        const hRes = await fetch(`/api/household?id=${encodeURIComponent(id)}`);
+        if (hRes.ok) {
+          const h = (await hRes.json()) as Household;
+          setHousehold(h);
+          setCookName(h.cookName);
+          setAllergies(h.allergies.join(", "));
+          setDislikes(h.dislikes.join(", "));
+        }
+        const memRes = await fetch(`/api/household/${id}/memories`);
+        if (memRes.ok) {
+          const j = await memRes.json();
+          setPantryMemories(j.memories ?? []);
+        }
+        await refreshRunHistory(id);
+        const lastRunId = localStorage.getItem(RUN_STORAGE_KEY);
+        if (lastRunId) await loadRunById(lastRunId);
+      } finally {
+        setHydrating(false);
+      }
+    })();
+  }, [loadRunById, refreshRunHistory]);
 
   const startWhisperRecording = async () => {
     setError(null);
@@ -205,8 +273,9 @@ export default function HousePotApp() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Run failed");
-      setRun(data as KitchenRun);
+      persistRun(data as KitchenRun);
       const hId = (data as KitchenRun).householdId;
+      void refreshRunHistory(hId);
       void fetch(`/api/household/${hId}/memories`)
         .then((r) => r.json())
         .then((j) => setPantryMemories(j.memories ?? []))
@@ -240,7 +309,7 @@ export default function HousePotApp() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Approve failed");
-      setRun(data as KitchenRun);
+      persistRun(data as KitchenRun);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Approve failed");
     } finally {
@@ -256,7 +325,7 @@ export default function HousePotApp() {
       const res = await fetch(`/api/runs/${run.id}/narrate`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Narration failed");
-      setRun(data as KitchenRun);
+      persistRun(data as KitchenRun);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Narration failed");
     } finally {
@@ -275,7 +344,7 @@ export default function HousePotApp() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Feedback failed");
-      setRun(data as KitchenRun);
+      persistRun(data as KitchenRun);
       setFeedback("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Feedback failed");
@@ -297,7 +366,15 @@ export default function HousePotApp() {
       ...run.proposal.steps.map((s, i) => `${i + 1}. ${s}`),
     ].join("\n");
     void navigator.clipboard.writeText(text);
+    setCopiedRecipe(true);
+    window.setTimeout(() => setCopiedRecipe(false), 2000);
   };
+
+  const showApproveActions =
+    run?.proposal && run.status === "awaiting_approval";
+  const showNarrateActions =
+    run?.proposal &&
+    (run.status === "approved" || (run.status === "failed" && cookApprovedRun(run)));
 
   return (
     <div className="min-h-full bg-[#F2F2EB] text-[#231F20]">
@@ -336,6 +413,15 @@ export default function HousePotApp() {
               className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2"
               value={allergies}
               onChange={(e) => setAllergies(e.target.value)}
+            />
+          </label>
+          <label className="block text-sm">
+            Dislikes (comma-separated)
+            <input
+              className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2"
+              value={dislikes}
+              onChange={(e) => setDislikes(e.target.value)}
+              placeholder="very spicy, cilantro…"
             />
           </label>
           <label className="block text-sm">
@@ -389,10 +475,40 @@ export default function HousePotApp() {
             </p>
           )}
           {error && <p className="rounded-lg bg-[#E97B77]/20 px-3 py-2 text-sm text-[#671912]">{error}</p>}
+          <KitchenProgress active={loading && !run?.proposal} />
         </section>
 
         <section className="space-y-4">
-          {!run?.proposal && (
+          {hydrating && (
+            <p className="text-center text-sm text-zinc-500">Loading saved household…</p>
+          )}
+          {runHistory.length > 0 && (
+            <label className="block text-sm text-[#2E4742]">
+              Recent pots
+              <select
+                className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm"
+                value={run?.id ?? ""}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  if (id) void loadRunById(id);
+                }}
+              >
+                <option value="">Select a past run…</option>
+                {runHistory.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.proposal?.title ?? "Run"} · {runStatusLabel(r.status)} ·{" "}
+                    {new Date(r.createdAt).toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {run && (
+            <p className="rounded-lg bg-white/80 px-3 py-2 font-mono text-xs text-[#3D5F58]">
+              Status: {runStatusLabel(run.status)}
+            </p>
+          )}
+          {!run?.proposal && !loading && (
             <div className="rounded-2xl border border-dashed border-[#3D5F58]/40 bg-white/60 p-8 text-center text-sm text-zinc-600">
               Proposal appears here. Gemma uses open weights; approve before ElevenLabs narrates.
             </div>
@@ -437,11 +553,11 @@ export default function HousePotApp() {
                 onClick={copyRecipe}
                 className="text-sm font-medium text-[#3D5F58] underline"
               >
-                Copy recipe for {cookName}
+                {copiedRecipe ? "Copied!" : `Copy recipe for ${cookName}`}
               </button>
             </>
           )}
-          {run?.status === "awaiting_approval" && run.proposal && (
+          {showApproveActions && (
             <div className="flex flex-col gap-3">
               <button
                 type="button"
@@ -471,14 +587,14 @@ export default function HousePotApp() {
               </div>
             </div>
           )}
-          {run?.status === "approved" && (
+          {showNarrateActions && run.status !== "narrated" && (
             <button
               type="button"
               onClick={narrate}
               disabled={loading}
               className="w-full rounded-full bg-[#F5B726] py-3 text-sm font-semibold text-[#231F20]"
             >
-              Read recipe aloud (ElevenLabs)
+              {run.status === "failed" ? "Retry narration (ElevenLabs)" : "Read recipe aloud (ElevenLabs)"}
             </button>
           )}
           {audioUrl && (
@@ -557,6 +673,18 @@ export default function HousePotApp() {
         </section>
       </main>
       <IntegrationsPanel />
+      <footer className="border-t border-[#3D5F58]/15 px-6 py-6 text-center text-xs text-zinc-600">
+        <a
+          className="font-medium text-[#3D5F58] underline"
+          href="https://github.com/smriad/house-pot"
+          target="_blank"
+          rel="noreferrer"
+        >
+          house-pot on GitHub
+        </a>
+        <span className="mx-2">·</span>
+        Hacktoberfest Weekend — Build for a Friend
+      </footer>
     </div>
   );
 }

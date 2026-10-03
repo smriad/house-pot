@@ -32,7 +32,7 @@ Short screen recording: propose → approve → narrate (30–60s). Judges need 
 ## Code
 
 <!-- After push, embed repo on DEV or use: -->
-`https://github.com/TODO_USERNAME/house-pot`
+`https://github.com/smriad/house-pot`
 
 Key paths:
 

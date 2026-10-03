@@ -33,7 +33,10 @@ export const recipeSchema = z.object({
     }),
   ),
   steps: z.array(z.string()),
-  allergyWarnings: z.array(z.string()).default([]),
+  allergyWarnings: z
+    .array(z.string())
+    .nullish()
+    .transform((v) => v ?? []),
   openSourceRationale: z.string(),
 });
 
