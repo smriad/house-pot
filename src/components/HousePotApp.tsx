@@ -42,7 +42,7 @@ function getSpeechRecognition(): SpeechRecognitionCtor | null {
 function RecipeCard({ recipe }: { recipe: Recipe }) {
   return (
     <article className="hp-card ring-1 ring-hp-sage/10">
-      <h3 className="text-xl font-semibold tracking-tight text-hp-sage-deep sm:text-2xl">
+      <h3 className="hp-display text-3xl text-hp-sage-deep sm:text-4xl">
         {recipe.title}
       </h3>
       <p className="mt-2 text-pretty text-sm leading-relaxed text-zinc-700 sm:text-base">
@@ -78,7 +78,7 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
       <ol className="mt-2 space-y-3 text-sm leading-relaxed text-zinc-800">
         {recipe.steps.map((step, i) => (
           <li key={step} className="flex gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-hp-sage/10 font-mono text-xs font-semibold text-hp-sage-deep">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-hp-ink bg-hp-gold font-mono text-xs font-semibold text-hp-ink shadow-[2px_2px_0_0_var(--hp-ink)]">
               {i + 1}
             </span>
             <span className="pt-0.5">{step}</span>
@@ -397,7 +397,7 @@ export default function HousePotApp() {
       </SiteHeader>
 
       {health && (
-        <p className="hp-container -mt-1 pb-2 font-mono text-[10px] leading-relaxed text-hp-sage sm:text-xs">
+        <p className="hp-container border-b border-hp-ink/10 bg-hp-gold/30 py-2 font-mono text-[10px] leading-relaxed text-hp-sage-deep tabular-nums sm:text-xs">
           gemma:{String(health.gemma)} · {String(health.storage ?? "local")} · elevenlabs:
           {health.elevenlabs ? "tts" : "off"}
           {health.elevenlabsStt ? "+scribe" : ""} · temporal:
@@ -525,13 +525,16 @@ export default function HousePotApp() {
             </label>
           )}
           {run && (
-            <p className="hp-chip bg-hp-sage/10 font-mono text-hp-sage-deep">
+            <p className="hp-chip bg-hp-sky/40 text-hp-sage-deep">
               {runStatusLabelKitchen(run.status)}
             </p>
           )}
           {!run?.proposal && !loading && (
             <div className="hp-empty">
-              Proposal appears here. Gemma uses open weights; approve before ElevenLabs narrates.
+              <p className="hp-display text-3xl text-hp-sage-deep">The pot is waiting</p>
+              <p className="mx-auto mt-3 max-w-sm">
+                Proposal appears here. Gemma uses open weights; approve before ElevenLabs narrates.
+              </p>
             </div>
           )}
           {run?.approvalQuestion && (
@@ -540,9 +543,9 @@ export default function HousePotApp() {
             </p>
           )}
           {run?.proposal && run.preferenceScore !== undefined && (
-            <div className="rounded-xl border border-hp-gold/35 bg-hp-gold/20 px-4 py-3 text-sm text-hp-ink">
-              <p className="font-semibold">
-                Friend fit score: {run.preferenceScore}/100
+            <div className="rounded-2xl border-2 border-hp-ink bg-hp-gold/35 px-4 py-3 text-sm text-hp-ink shadow-[3px_3px_0_0_var(--hp-ink)]">
+              <p className="hp-display text-xl tabular-nums">
+                Friend fit {run.preferenceScore}/100
                 {run.predictionSource ? ` · ${run.predictionSource}` : ""}
               </p>
               {run.fitReasons?.map((r) => (

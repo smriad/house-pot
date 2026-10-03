@@ -10,7 +10,7 @@ export default function KitchenProgress({ active }: { active: boolean }) {
   if (!active) return null;
   return (
     <div className="hp-card border-hp-sage/20" role="status" aria-live="polite">
-      <p className="font-mono text-sm font-semibold text-hp-sage-deep">Kitchen agent working…</p>
+      <p className="hp-display text-2xl text-hp-sage-deep">Kitchen agent working…</p>
       <p className="mt-1 text-pretty text-xs text-zinc-600 sm:text-sm">
         First TabPFN run can take 1–2 minutes on a cold start. Keep this tab open.
       </p>

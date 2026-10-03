@@ -227,7 +227,7 @@ export default function IntegrationsPanel() {
           {rows.map((row) => (
             <div
               key={row.name}
-              className="rounded-xl border border-[#F2F2EB]/10 bg-[#231F20]/30 px-4 py-3"
+              className="rounded-2xl border-2 border-hp-cream/20 bg-hp-ink/40 px-4 py-3 shadow-[3px_3px_0_0_rgb(245_183_38_/_0.28)]"
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -239,8 +239,8 @@ export default function IntegrationsPanel() {
                   )}
                 </div>
                 <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] ${
-                    row.ok ? "bg-[#3D5F58] text-[#F5B726]" : "bg-[#E97B77]/30 text-[#F2F2EB]"
+                  className={`shrink-0 rounded-full border border-hp-ink px-2 py-0.5 font-mono text-[10px] ${
+                    row.ok ? "bg-hp-gold text-hp-ink" : "bg-hp-blush/40 text-hp-cream"
                   }`}
                 >
                   {row.ok ? "live" : "off"}

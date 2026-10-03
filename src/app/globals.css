@@ -9,6 +9,7 @@
   --hp-gold: #f5b726;
   --hp-tomato: #e53927;
   --hp-blush: #e97b77;
+  --hp-maroon: #671912;
   --background: var(--hp-cream);
   --foreground: var(--hp-ink);
   color-scheme: light;
@@ -25,8 +26,10 @@
   --color-hp-gold: var(--hp-gold);
   --color-hp-tomato: var(--hp-tomato);
   --color-hp-blush: var(--hp-blush);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-hp-maroon: var(--hp-maroon);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-martian), ui-monospace, monospace;
+  --font-display: var(--font-barlow), "Arial Narrow", sans-serif;
 }
 
 html {
@@ -34,16 +37,95 @@ html {
 }
 
 body {
-  background: var(--hp-cream);
+  background-color: var(--hp-cream);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgb(61 95 88 / 0.16) 1px, transparent 0);
+  background-size: 18px 18px;
   color: var(--hp-ink);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--hp-tomato);
+  outline-offset: 3px;
+}
+
 @layer components {
   .hp-page {
-    @apply flex min-h-dvh flex-col bg-hp-cream text-hp-ink;
+    @apply flex min-h-dvh flex-col text-hp-ink;
+  }
+
+  .hp-display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+  }
+
+  .hp-display-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 0.92;
+    font-size: clamp(2.4rem, 4vw + 1.2rem, 4.4rem);
+  }
+
+  .hp-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--hp-gold);
+  }
+
+  .hp-colorbar {
+    @apply flex h-2.5 w-full;
+  }
+
+  .hp-colorbar > span:nth-child(1) {
+    @apply flex-1 bg-hp-sky;
+  }
+  .hp-colorbar > span:nth-child(2) {
+    @apply flex-1 bg-hp-gold;
+  }
+  .hp-colorbar > span:nth-child(3) {
+    @apply flex-1 bg-hp-blush;
+  }
+  .hp-colorbar > span:nth-child(4) {
+    @apply flex-1 bg-hp-tomato;
+  }
+  .hp-colorbar > span:nth-child(5) {
+    @apply flex-1 bg-hp-sage;
+  }
+
+  .hp-sticker {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    @apply inline-flex items-center rounded-full border-2 border-hp-ink px-3 py-1 text-sm text-hp-ink shadow-[2px_2px_0_0_var(--hp-ink)];
+  }
+
+  .hp-sticker-gold {
+    @apply bg-hp-gold;
+  }
+
+  .hp-sticker-sky {
+    @apply bg-hp-sky;
+  }
+
+  .hp-sticker-pink {
+    @apply bg-hp-blush;
+  }
+
+  .hp-mark {
+    font-family: var(--font-display);
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-hp-ink bg-hp-gold text-xs font-bold text-hp-ink shadow-[2px_2px_0_0_var(--hp-ink)];
   }
 
   .hp-container {
@@ -51,51 +133,67 @@ body {
   }
 
   .hp-nav-link {
-    @apply rounded-full border border-hp-cream/25 px-3 py-1.5 text-xs font-medium text-hp-cream/95 transition-colors hover:bg-hp-cream/10 sm:text-sm;
+    font-family: var(--font-mono);
+    @apply rounded-full border border-hp-cream/30 px-3 py-1.5 text-[11px] font-medium tracking-wide text-hp-cream/95 transition-colors hover:border-hp-gold hover:bg-hp-gold/15 hover:text-hp-gold sm:text-xs;
   }
 
   .hp-section-title {
-    @apply font-mono text-base font-semibold text-hp-sage-deep sm:text-lg;
+    font-family: var(--font-display);
+    @apply text-2xl font-bold tracking-tight text-hp-sage-deep sm:text-3xl;
   }
 
   .hp-label {
-    @apply block text-sm font-medium text-hp-sage-deep;
+    font-family: var(--font-mono);
+    @apply block text-[11px] font-medium tracking-wide text-hp-sage-deep;
   }
 
   .hp-input {
-    @apply mt-1.5 w-full min-h-11 rounded-xl border border-zinc-300/90 bg-white px-3.5 py-2.5 text-base text-hp-ink shadow-sm transition-[border-color,box-shadow] placeholder:text-zinc-400 focus:border-hp-sage focus:outline-none focus:ring-2 focus:ring-hp-sage/25 sm:text-sm;
+    @apply mt-1.5 w-full min-h-11 rounded-xl border-2 border-hp-ink/25 bg-white px-3.5 py-2.5 text-base text-hp-ink shadow-[2px_2px_0_0_rgb(46_71_66_/_0.12)] transition-[border-color,box-shadow] placeholder:text-zinc-400 focus:border-hp-sage focus:outline-none focus:ring-2 focus:ring-hp-gold/50 sm:text-sm;
   }
 
   .hp-textarea {
-    @apply mt-1.5 w-full min-h-[8rem] resize-y rounded-xl border border-zinc-300/90 bg-white px-3.5 py-2.5 font-mono text-sm leading-relaxed text-hp-ink shadow-sm transition-[border-color,box-shadow] placeholder:text-zinc-400 focus:border-hp-sage focus:outline-none focus:ring-2 focus:ring-hp-sage/25;
+    @apply mt-1.5 w-full min-h-[8rem] resize-y rounded-xl border-2 border-hp-ink/25 bg-white px-3.5 py-2.5 font-mono text-sm leading-relaxed text-hp-ink shadow-[2px_2px_0_0_rgb(46_71_66_/_0.12)] transition-[border-color,box-shadow] placeholder:text-zinc-400 focus:border-hp-sage focus:outline-none focus:ring-2 focus:ring-hp-gold/50;
   }
 
   .hp-card {
-    @apply rounded-2xl border border-hp-sage/15 bg-white p-5 shadow-sm shadow-hp-sage/5 sm:p-6;
+    @apply rounded-2xl border-2 border-hp-ink/80 bg-white p-5 sm:p-6;
+    box-shadow: 4px 4px 0 0 rgb(46 71 66 / 0.28);
   }
 
   .hp-btn {
-    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-base font-bold transition-[transform,box-shadow,background-color] hover:-translate-x-px hover:-translate-y-px active:translate-x-px active:translate-y-px disabled:pointer-events-none disabled:opacity-55;
   }
 
   .hp-btn-primary {
-    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55 bg-hp-tomato text-white shadow-md shadow-hp-tomato/20 hover:brightness-105;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center whitespace-nowrap rounded-full border-2 border-hp-ink bg-hp-tomato px-5 py-2.5 text-base font-bold text-white shadow-[3px_3px_0_0_var(--hp-ink)] transition-[transform,box-shadow] hover:-translate-x-px hover:-translate-y-px hover:shadow-[4px_4px_0_0_var(--hp-ink)] active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_0_var(--hp-ink)] disabled:pointer-events-none disabled:opacity-55;
   }
 
   .hp-btn-sage {
-    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55 bg-hp-sage text-white shadow-md shadow-hp-sage/20 hover:brightness-105;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center whitespace-nowrap rounded-full border-2 border-hp-ink bg-hp-sage px-5 py-2.5 text-base font-bold text-white shadow-[3px_3px_0_0_var(--hp-ink)] transition-[transform,box-shadow] hover:-translate-x-px hover:-translate-y-px hover:shadow-[4px_4px_0_0_var(--hp-ink)] active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_0_var(--hp-ink)] disabled:pointer-events-none disabled:opacity-55;
   }
 
   .hp-btn-gold {
-    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55 bg-hp-gold text-hp-ink shadow-md shadow-hp-gold/25 hover:brightness-105;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center whitespace-nowrap rounded-full border-2 border-hp-ink bg-hp-gold px-5 py-2.5 text-base font-bold text-hp-ink shadow-[3px_3px_0_0_var(--hp-ink)] transition-[transform,box-shadow] hover:-translate-x-px hover:-translate-y-px hover:shadow-[4px_4px_0_0_var(--hp-ink)] active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_0_var(--hp-ink)] disabled:pointer-events-none disabled:opacity-55;
   }
 
   .hp-btn-outline {
-    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55 border-2 border-hp-sage bg-transparent text-hp-sage-deep hover:bg-hp-sage/5;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center whitespace-nowrap rounded-full border-2 border-hp-ink bg-hp-cream px-5 py-2.5 text-base font-bold text-hp-sage-deep shadow-[3px_3px_0_0_var(--hp-ink)] transition-[transform,box-shadow,background-color] hover:-translate-x-px hover:-translate-y-px hover:bg-white hover:shadow-[4px_4px_0_0_var(--hp-ink)] active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_0_var(--hp-ink)] disabled:pointer-events-none disabled:opacity-55;
   }
 
   .hp-btn-ghost {
-    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55 border border-zinc-300 bg-white text-hp-sage-deep hover:bg-zinc-50;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center whitespace-nowrap rounded-full border-2 border-hp-ink/40 bg-white px-5 py-2.5 text-base font-bold text-hp-sage-deep transition-[transform,background-color] hover:border-hp-ink hover:bg-hp-cream active:translate-y-px disabled:pointer-events-none disabled:opacity-55;
   }
 
   .hp-btn-block {
@@ -103,11 +201,13 @@ body {
   }
 
   .hp-chip {
-    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
+    font-family: var(--font-mono);
+    @apply inline-flex items-center rounded-full border-2 border-hp-ink/70 px-3 py-1 text-[11px] font-semibold tracking-wide;
   }
 
   .hp-empty {
-    @apply rounded-2xl border border-dashed border-hp-sage/35 bg-white/70 p-8 text-center text-sm leading-relaxed text-zinc-600 sm:p-10;
+    @apply rounded-2xl border-2 border-dashed border-hp-ink/50 bg-white/80 p-8 text-center text-sm leading-relaxed text-zinc-700 sm:p-10;
+    box-shadow: 4px 4px 0 0 var(--hp-gold);
   }
 }
 
@@ -130,5 +230,14 @@ body {
   .motion-safe\:animate-pulse,
   .motion-safe\:animate-\[kitchen-bar_2\.4s_ease-in-out_infinite\] {
     animation: none !important;
+  }
+  .hp-btn,
+  .hp-btn-primary,
+  .hp-btn-sage,
+  .hp-btn-gold,
+  .hp-btn-outline,
+  .hp-btn-ghost {
+    transform: none !important;
+    transition: none;
   }
 }

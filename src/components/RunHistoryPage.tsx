@@ -86,7 +86,7 @@ export default function RunHistoryPage() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="hp-btn min-h-11 border border-hp-cream/40 bg-transparent text-hp-cream hover:bg-hp-cream/10 disabled:opacity-50"
+          className="hp-btn border-2 border-hp-cream bg-transparent text-hp-cream shadow-[3px_3px_0_0_rgb(242_242_235_/_0.45)] hover:bg-hp-cream/10 disabled:opacity-50"
         >
           {loading ? "Refreshing…" : "Refresh"}
         </button>
@@ -119,10 +119,10 @@ export default function RunHistoryPage() {
               role="tab"
               aria-selected={filter === s}
               onClick={() => setFilter(s)}
-              className={`min-h-9 rounded-full px-4 py-1.5 text-xs font-medium touch-manipulation sm:text-sm ${
+              className={`min-h-9 touch-manipulation rounded-full border-2 border-hp-ink px-4 py-1.5 font-display text-sm font-bold ${
                 filter === s
-                  ? "bg-hp-sage text-white shadow-sm"
-                  : "bg-white text-hp-sage ring-1 ring-hp-sage/20 hover:bg-hp-sage/5"
+                  ? "bg-hp-gold text-hp-ink shadow-[2px_2px_0_0_var(--hp-ink)]"
+                  : "bg-white text-hp-sage-deep hover:bg-hp-sky/30"
               }`}
             >
               {s === "all" ? "All" : runStatusLabel(s)}
@@ -149,7 +149,7 @@ export default function RunHistoryPage() {
             <li key={run.id} className="hp-card transition-shadow hover:shadow-md hover:shadow-hp-sage/10">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-lg font-semibold tracking-tight text-hp-sage-deep sm:text-xl">
+                  <h2 className="hp-display text-2xl text-hp-sage-deep sm:text-3xl">
                     {run.proposal?.title ?? "Run (no recipe yet)"}
                   </h2>
                   <time className="mt-1 block text-xs text-zinc-500" dateTime={run.createdAt}>

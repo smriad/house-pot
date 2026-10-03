@@ -57,28 +57,30 @@ House Pot on Render is a **demo slice**: hosted Gemma + MongoDB Atlas + ElevenLa
 
 The app uses an **OpenAI-compatible** client (`GEMMA_*`). Ollama URLs will not work on Render.
 
-**Groq (recommended for Render)**
+**Google AI Studio (recommended for Render — real Gemma 3)**
 
-Recipe propose uses OpenAI **`json_object`** mode. Groq’s Gemma 2 endpoint supports that reliably on the free tier.
+Groq [retired `gemma2-9b-it`](https://console.groq.com/docs/deprecations) (Oct 2025). For the Gemma prize track, use hosted **Gemma** via AI Studio:
 
-1. Create an API key: [Groq Console](https://console.groq.com/keys).
+1. API key: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 2. In Render → **Environment**:
+
+| Variable | Value |
+| --- | --- |
+| `GEMMA_BASE_URL` | `https://generativelanguage.googleapis.com/v1beta/openai/` |
+| `GEMMA_API_KEY` | your AI Studio key |
+| `GEMMA_MODEL` | `gemma-4-4b-it` (or `gemma-4-31b-it`) |
+
+If propose returns 400 about JSON mode, remove `response_format` in code or self-host Ollama (`gemma3:4b`).
+
+**Groq (fast OpenAI-compatible, not Gemma)**
+
+Use only if you accept a non-Gemma model on the live demo (e.g. `openai/gpt-oss-20b` per [Groq deprecations](https://console.groq.com/docs/deprecations)):
 
 | Variable | Value |
 | --- | --- |
 | `GEMMA_BASE_URL` | `https://api.groq.com/openai/v1` |
 | `GEMMA_API_KEY` | `gsk_...` |
-| `GEMMA_MODEL` | `gemma2-9b-it` |
-
-**Google AI Studio (Gemma 3)**
-
-Same OpenAI-compatible base URL as Gemini, but some Gemma model IDs reject JSON mode. If propose fails with a 400 about JSON mode, use Groq above or self-host Ollama behind a tunnel.
-
-| Variable | Value |
-| --- | --- |
-| `GEMMA_BASE_URL` | `https://generativelanguage.googleapis.com/v1beta/openai/` |
-| `GEMMA_API_KEY` | key from [AI Studio](https://aistudio.google.com/apikey) |
-| `GEMMA_MODEL` | `gemma-3-4b-it` (or another Gemma id listed in AI Studio) |
+| `GEMMA_MODEL` | `openai/gpt-oss-20b` |
 
 ### 3. Render web service
 
