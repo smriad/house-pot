@@ -1,6 +1,7 @@
 ---
 title: "House Pot: Amma's kitchen in Dhaka — approve first, then listen"
-published: false
+published: true
+dev_url: https://dev.to/smriad/house-pot-ammas-kitchen-in-dhaka-approve-first-then-listen-2mi9
 tags: devchallenge, weekendchallenge, hf26challenge
 ---
 
@@ -79,6 +80,8 @@ sequenceDiagram
 ## Demo
 
 **Live:** https://house-pot.onrender.com/
+
+<video src="https://house-pot.onrender.com/demo.mp4" controls width="100%" title="House Pot demo — technology tour and approved recipe narration"></video>
 
 **Demo video (~5 min):** https://house-pot.onrender.com/demo.mp4 — 1080p UI tour (male Bangladesh-style voice); each chapter names **which technology**, **where** in the UI/API, and **how** it is used, then recipe TTS (`npm run demo:record`)
 
