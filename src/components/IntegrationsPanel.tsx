@@ -215,7 +215,7 @@ export default function IntegrationsPanel() {
   const liveCount = rows.filter((r) => r.ok).length;
 
   return (
-    <section className="border-t border-hp-sage/25 bg-hp-sage-deep px-4 py-6 text-hp-cream sm:px-6">
+    <section className="border-t border-hp-sage/25 bg-hp-sage-deep px-4 py-4 text-hp-cream sm:px-6">
       <div className="hp-container flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-mono text-sm uppercase tracking-widest text-hp-sky">

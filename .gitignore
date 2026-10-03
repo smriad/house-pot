@@ -38,6 +38,11 @@ yarn-error.log*
 # local data fallback
 .data/
 
+# demo recording intermediate
+public/demo.webm
+.data/demo-vo/
+.data/demo-video/
+
 # vercel
 .vercel
 

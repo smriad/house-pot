@@ -6,9 +6,11 @@ type SiteHeaderProps = {
   title: string;
   subtitle: string;
   children?: ReactNode;
+  /** Tighter hero for the main kitchen screen */
+  compact?: boolean;
 };
 
-export function SiteHeader({ title, subtitle, children }: SiteHeaderProps) {
+export function SiteHeader({ title, subtitle, children, compact }: SiteHeaderProps) {
   return (
     <header className="relative overflow-hidden bg-hp-sage-deep text-hp-cream">
       <div className="hp-colorbar" aria-hidden>
@@ -30,9 +32,11 @@ export function SiteHeader({ title, subtitle, children }: SiteHeaderProps) {
         className="pointer-events-none absolute right-1/4 top-24 h-28 w-28 rounded-full bg-hp-blush/20 blur-2xl"
         aria-hidden
       />
-      <div className="hp-container relative py-8 sm:py-12">
+      <div
+        className={`hp-container relative ${compact ? "py-4 sm:py-5" : "py-8 sm:py-12"}`}
+      >
         <nav
-          className="mb-8 flex flex-wrap items-center justify-between gap-3"
+          className={`flex flex-wrap items-center justify-between gap-3 ${compact ? "mb-4" : "mb-8"}`}
           aria-label="Primary"
         >
           <Link href="/" className="group flex items-center gap-2.5">
@@ -60,19 +64,27 @@ export function SiteHeader({ title, subtitle, children }: SiteHeaderProps) {
             </a>
           </div>
         </nav>
-        <p className="hp-kicker">Hacktoberfest 2026</p>
-        <h1 className="hp-display-title mt-3 max-w-3xl text-balance text-hp-cream">
+        {!compact && <p className="hp-kicker">Hacktoberfest 2026</p>}
+        <h1
+          className={`hp-display-title max-w-3xl text-balance text-hp-cream ${compact ? "mt-1 text-[clamp(1.75rem,3vw+1rem,2.75rem)]" : "mt-3"}`}
+        >
           {title}
         </h1>
-        <ul className="mt-5 flex flex-wrap gap-2" aria-label="Project themes">
-          <li className="hp-sticker hp-sticker-gold">Build for a Friend</li>
-          <li className="hp-sticker hp-sticker-sky">Open weights</li>
-          <li className="hp-sticker hp-sticker-pink">Cook approves</li>
-        </ul>
-        <p className="mt-5 max-w-2xl text-pretty text-sm leading-relaxed text-hp-cream/90 sm:text-base">
+        {!compact && (
+          <ul className="mt-5 flex flex-wrap gap-2" aria-label="Project themes">
+            <li className="hp-sticker hp-sticker-gold">Build for a Friend</li>
+            <li className="hp-sticker hp-sticker-sky">Open weights</li>
+            <li className="hp-sticker hp-sticker-pink">Cook approves</li>
+          </ul>
+        )}
+        <p
+          className={`max-w-2xl text-pretty leading-relaxed text-hp-cream/90 ${compact ? "mt-2 text-xs sm:text-sm" : "mt-5 text-sm sm:text-base"}`}
+        >
           {subtitle}
         </p>
-        {children ? <div className="mt-6 flex flex-wrap gap-3">{children}</div> : null}
+        {children ? (
+          <div className={`flex flex-wrap gap-3 ${compact ? "mt-3" : "mt-6"}`}>{children}</div>
+        ) : null}
       </div>
     </header>
   );
@@ -80,7 +92,7 @@ export function SiteHeader({ title, subtitle, children }: SiteHeaderProps) {
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t-2 border-hp-ink/10 bg-hp-cream px-4 py-8 text-center text-xs leading-relaxed text-zinc-700 sm:px-6">
+    <footer className="mt-auto border-t-2 border-hp-ink/10 bg-hp-cream px-4 py-5 text-center text-xs leading-relaxed text-zinc-700 sm:px-6">
       <p className="hp-container">
         <a
           className="font-semibold text-hp-sage-deep underline decoration-hp-gold decoration-2 underline-offset-4 hover:text-hp-tomato"

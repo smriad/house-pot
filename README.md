@@ -286,7 +286,7 @@ TABPFN_DISABLE=true
 
 Use the in-app **Sponsor integrations** panel or `GET /api/health` on each environment to see which probes are `live`.
 
-**Demo assets (after deploy):** https://house-pot.onrender.com/cover.jpg · https://house-pot.onrender.com/demo.mp4 (`scripts/build-demo-video.sh`)
+**Demo assets (after deploy):** https://house-pot.onrender.com/cover.jpg · https://house-pot.onrender.com/demo.mp4 — `npm run demo:record` (1080p, male Bangladesh-style voice: technology / where / how in `scripts/lib/demo-voice.mjs`), or static `scripts/build-demo-video.sh`
 
 ---
 
@@ -339,19 +339,82 @@ Agent steps are wrapped with Sentry spans (`withAgentSpan`) when `SENTRY_DSN` is
 
 ---
 
-## Technology stack
+## Technologies — how and why
 
-| Area | Implementation |
+Tables below match what we **actually run**: **`live` on local dev** (`npm run dev` → `GET /api/health`) and what is **live on Render** today. **SerpApi** is not configured (no key). Other sponsor hooks exist in the repo for probes only.
+
+| Environment | Live integrations (summary) |
 | --- | --- |
-| Runtime | Node.js 24, Next.js 16 (App Router), React 19 |
-| LLM | OpenAI SDK → Ollama, Google AI Studio OpenAI-compat, or Groq (`GEMMA_*`) |
-| Database | MongoDB Atlas (`house_pot` database); local JSON fallback under `.data/` |
-| Embeddings | Ollama `nomic-embed-text`, or Google `text-embedding-004` when using AI Studio |
-| Workflow | Mastra (`kitchen-workflow`, approval gate) |
-| TTS / STT | ElevenLabs (narration after approve; Scribe optional) |
-| Observability | Sentry; in-app integration probes (`GET /api/health`) |
-| CI | GitHub Actions: test, build, lint; optional Render deploy hook |
-| Hosting | Render (`render.yaml`), optional Docker image with Whisper |
+| **Local dev** | Gemma (Ollama), embeddings, Whisper, ElevenLabs, MongoDB, Mastra, Temporal, Backboard, Tiger, TabPFN, Sentry, TheMealDB, Open Food Facts |
+| **[Render](https://house-pot.onrender.com/api/health)** | Gemma, MongoDB, ElevenLabs, Mastra, Backboard, Tiger, Sentry, TheMealDB, Open Food Facts — Whisper, Temporal, embeddings, TabPFN, SerpApi **off** by design |
+
+Hacktoberfest narrative and prize framing: [`SUBMISSION.md`](./SUBMISSION.md#technologies--what-i-used-how-and-why). **Sponsor integrations** panel in the app mirrors the same probes.
+
+### Core application
+
+| Technology | How it's used | Why |
+| --- | --- | --- |
+| **Next.js 16** (App Router) | Kitchen UI + `/api/runs`, approve, narrate, health | One deployable app; safety checks on the server |
+| **React 19** + **TypeScript** | Recipe card, approve gate, history | UI aligned with `awaiting_approval` → `narrated` |
+| **Tailwind CSS 4** | Touch-friendly kitchen layout | Fast iteration at the stove |
+| **Zod** | `recipeSchema` on Gemma output | Catch bad JSON before the card |
+| **OpenAI Node SDK** | `gemma.ts` → `GEMMA_*` (Ollama local, hosted on Render) | One client for open weights and the public demo |
+
+### Planning (probabilistic)
+
+| Technology | How it's used | Why |
+| --- | --- | --- |
+| **Ollama + Gemma** `gemma3:4b` | `proposeRecipe()` → one JSON recipe | Open-weight planning on a laptop |
+| **Gemma critic** | Optional full recipe replace once | Better draft; safety still in code |
+| **Cook brief** | One-line card summary | Less reading while cooking |
+| **Embeddings** (`nomic-embed-text`, local) | Rank pantry memories on propose | Surface “less cumin” without retyping |
+| **Hosted `GEMMA_*`** (Render) | Same path on production URL | Judges without Ollama |
+
+### Policy (deterministic — core product)
+
+| Technology | How it's used | Why |
+| --- | --- | --- |
+| **`pantry-check.ts`** | Pantry marks + allergen block on approve | Allergy control is code, not a prompt |
+| **Re-check on approve + narrate** | Same `PantryReview` on both routes | Stale approve cannot narrate new allergens |
+| **Open Food Facts** | Allergen enrichment | Beyond string matching |
+| **TheMealDB** | Dish-name grounding on propose | No API key |
+
+### Voice
+
+| Technology | How it's used | Why |
+| --- | --- | --- |
+| **ElevenLabs** | TTS after approve; idempotent narrate | Approved recipe text only—not the voice note |
+| **Whisper** (local) | `POST /api/transcribe` | STT on dev machine; not on Render blueprint |
+
+### Memory and persistence
+
+| Technology | How it's used | Why |
+| --- | --- | --- |
+| **MongoDB Atlas** | Households, runs, memories, feedback | Memory across nights (`.data/` JSON fallback in code if URI unset) |
+| **Backboard** | Semantic memories on propose / feedback | Longer kitchen context |
+| **Tiger Data (Postgres)** | Feedback mirror after runs | SQL sidecar experiments |
+| **`localStorage`** | Browser household id | No login; `?household=` for history |
+
+### Workflows, scoring, observability
+
+| Technology | How it's used | Why |
+| --- | --- | --- |
+| **Mastra + LibSQL** | Approval gate until cook taps approve | Human-in-the-loop workflow |
+| **Temporal** | Durable narrate when worker is up (local) | Retries in dev; `TEMPORAL_NARRATE=false` on Render |
+| **TabPFN** (local Python) | Blended friend-fit score on propose | Dev signal; heuristic on Render (`TABPFN_DISABLE`) |
+| **Sentry** | Agent step spans | Tracing; in-app `trace[]` always |
+| **Run trace** | `GET /api/runs/:id/trace` | Step-by-step audit |
+
+### Demo and deploy
+
+| Technology | How it's used | Why |
+| --- | --- | --- |
+| **Render** | `render.yaml` | Public demo |
+| **GitHub Actions** | `live-smoke.yml` | CI on production propose path |
+| **Playwright** | `npm run demo:record` → `demo.mp4` | Judge-friendly video |
+| **Docker Compose** | `docker-compose.temporal.yml` | Local Temporal only |
+
+**Design line:** plan (Gemma) → policy (`pantry-check`) → deliver (ElevenLabs, gated).
 
 ---
 

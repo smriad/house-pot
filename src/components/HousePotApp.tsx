@@ -43,10 +43,10 @@ function getSpeechRecognition(): SpeechRecognitionCtor | null {
 function RecipeCard({ recipe, review }: { recipe: Recipe; review: PantryReview }) {
   return (
     <article className="hp-card ring-1 ring-hp-sage/10">
-      <h3 className="hp-display text-3xl text-hp-sage-deep sm:text-4xl">
+      <h3 className="hp-display text-2xl text-hp-sage-deep sm:text-3xl">
         {recipe.title}
       </h3>
-      <p className="mt-2 text-pretty text-sm leading-relaxed text-zinc-700 sm:text-base">
+      <p className="mt-1.5 text-pretty text-sm leading-snug text-zinc-700">
         {recipe.summary}
       </p>
       {review.allergyHits.length > 0 && (
@@ -62,48 +62,68 @@ function RecipeCard({ recipe, review }: { recipe: Recipe; review: PantryReview }
           Allergy watch: {recipe.allergyWarnings.join(", ")}
         </p>
       )}
-      <h4 className="mt-5 text-xs font-semibold uppercase tracking-wider text-hp-sage">
-        Ingredients
-      </h4>
-      <ul className="mt-2 space-y-1.5 text-sm text-zinc-800">
-        {recipe.ingredients.map((ing, index) => {
-          const check = review.ingredients[index];
-          return (
-            <li key={`${ing.item}-${ing.amount}`} className="flex flex-wrap items-baseline gap-2 border-b border-zinc-100 py-1.5 last:border-0">
-              <span className="shrink-0 font-mono text-xs text-hp-sage">{ing.amount}</span>
-              <span>
-                {ing.item}
-                {ing.substitute ? (
-                  <span className="text-zinc-500"> (or {ing.substitute})</span>
-                ) : null}
-              </span>
-              {check?.allergyHit ? (
-                <span className="hp-chip bg-hp-blush/40 text-hp-maroon">allergy</span>
-              ) : check && !check.onHand ? (
-                <span className="hp-chip bg-hp-sky/40 text-hp-sage-deep">not in the pantry</span>
-              ) : check?.onHand && !check.staple ? (
-                <span className="hp-chip bg-hp-gold/50 text-hp-ink">in the kitchen</span>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
-      <h4 className="mt-5 text-xs font-semibold uppercase tracking-wider text-hp-sage">
-        Steps
-      </h4>
-      <ol className="mt-2 space-y-3 text-sm leading-relaxed text-zinc-800">
-        {recipe.steps.map((step, i) => (
-          <li key={step} className="flex gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-hp-ink bg-hp-gold font-mono text-xs font-semibold text-hp-ink shadow-[2px_2px_0_0_var(--hp-ink)]">
-              {i + 1}
-            </span>
-            <span className="pt-0.5">{step}</span>
-          </li>
-        ))}
-      </ol>
-      <p className="mt-5 border-t border-zinc-100 pt-4 text-xs leading-relaxed text-zinc-500">
-        {recipe.openSourceRationale}
-      </p>
+      <div className="mt-4 grid gap-4 md:grid-cols-2 md:gap-5">
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-hp-sage">
+            Ingredients
+          </h4>
+          <ul className="mt-1.5 space-y-1 text-sm text-zinc-800">
+            {recipe.ingredients.map((ing, index) => {
+              const check = review.ingredients[index];
+              return (
+                <li
+                  key={`${ing.item}-${ing.amount}`}
+                  className="flex flex-wrap items-baseline gap-1.5 border-b border-zinc-100 py-1 last:border-0"
+                >
+                  <span className="shrink-0 font-mono text-[10px] text-hp-sage sm:text-xs">
+                    {ing.amount}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    {ing.item}
+                    {ing.substitute ? (
+                      <span className="text-zinc-500"> (or {ing.substitute})</span>
+                    ) : null}
+                  </span>
+                  {check?.allergyHit ? (
+                    <span className="hp-chip bg-hp-blush/40 text-hp-maroon text-[10px]">
+                      allergy
+                    </span>
+                  ) : check && !check.onHand ? (
+                    <span className="hp-chip bg-hp-sky/40 text-hp-sage-deep text-[10px]">
+                      missing
+                    </span>
+                  ) : check?.onHand && !check.staple ? (
+                    <span className="hp-chip bg-hp-gold/50 text-hp-ink text-[10px]">
+                      in kitchen
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-hp-sage">
+            Steps
+          </h4>
+          <ol className="mt-1.5 space-y-2 text-sm leading-snug text-zinc-800">
+            {recipe.steps.map((step, i) => (
+              <li key={step} className="flex gap-2">
+                <span
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-hp-ink bg-hp-gold font-mono text-[10px] font-semibold text-hp-ink shadow-[2px_2px_0_0_var(--hp-ink)]"
+                >
+                  {i + 1}
+                </span>
+                <span className="pt-0.5">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+      <details className="mt-3 border-t border-zinc-100 pt-2 text-xs text-zinc-500">
+        <summary className="cursor-pointer font-medium text-hp-sage">Why this dish</summary>
+        <p className="mt-1.5 leading-relaxed">{recipe.openSourceRationale}</p>
+      </details>
     </article>
   );
 }
@@ -415,75 +435,86 @@ export default function HousePotApp() {
     run?.proposal &&
     (run.status === "approved" || (run.status === "failed" && cookApprovedRun(run)));
 
+  const hasPlanningExtras =
+    run?.kitchenBrain &&
+    (run.kitchenBrain.mealIdeas.length > 0 ||
+      run.kitchenBrain.foodFacts.length > 0 ||
+      run.kitchenBrain.criticNotes.length > 0);
+
   return (
     <div className="hp-page">
       <SiteHeader
+        compact
         title="Build for a Friend"
-        subtitle={`From the market to the pot: Gemma plans dinner from what is in the kitchen. MongoDB remembers allergies and pantry. ElevenLabs reads the recipe aloud only after ${cookName || "your cook"} taps approve.`}
-      >
-        <Link href="/history" className="hp-btn-gold">
-          Pot history
-        </Link>
-      </SiteHeader>
+        subtitle={`Gemma plans from your pantry. MongoDB remembers allergies. ElevenLabs reads aloud only after ${cookName || "your cook"} approves.`}
+      />
 
       {health && (
-        <p className="hp-container border-b border-hp-ink/10 bg-hp-gold/30 py-2 font-mono text-[10px] leading-relaxed text-hp-sage-deep tabular-nums sm:text-xs">
+        <p className="hp-container border-b border-hp-ink/10 bg-hp-gold/30 px-4 py-1.5 font-mono text-[10px] leading-snug text-hp-sage-deep tabular-nums sm:text-[11px]">
           gemma:{String(health.gemma)} · {String(health.storage ?? "local")} · elevenlabs:
           {health.elevenlabs ? "tts" : "off"}
           {health.elevenlabsStt ? "+scribe" : ""} · temporal:
           {health.temporal ? "on" : "off"} · embed:
-          {health.embeddings ? "on" : "off"} · serp:{health.serpapi ? "on" : "off"}
+          {health.embeddings ? "on" : "off"}
         </p>
       )}
 
-      <main className="hp-container grid flex-1 gap-8 py-8 sm:py-10 lg:grid-cols-2 lg:gap-10">
-        <section className="space-y-4 sm:space-y-5" aria-labelledby="cook-profile-heading">
-          <h2 id="cook-profile-heading" className="hp-section-title">
+      <main
+        className="hp-container grid flex-1 gap-6 py-5 sm:py-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]"
+      >
+        <section
+          className="space-y-3 lg:sticky lg:top-3 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto lg:pr-1"
+          aria-labelledby="cook-profile-heading"
+        >
+          <h2 id="cook-profile-heading" className="hp-section-title text-xl sm:text-2xl">
             Who are you cooking for?
           </h2>
-          <label className="hp-label">
-            Cook&apos;s name
-            <input
-              className="hp-input"
-              autoComplete="name"
-              value={cookName}
-              onChange={(e) => setCookName(e.target.value)}
-            />
-          </label>
-          <label className="hp-label">
-            Allergies (comma-separated)
-            <input
-              className="hp-input"
-              value={allergies}
-              onChange={(e) => setAllergies(e.target.value)}
-            />
-          </label>
-          <label className="hp-label">
-            Dislikes (comma-separated)
-            <input
-              className="hp-input"
-              value={dislikes}
-              onChange={(e) => setDislikes(e.target.value)}
-              placeholder="very spicy, cilantro…"
-            />
-          </label>
-          <label className="hp-label">
-            Diners
-            <input
-              type="number"
-              min={1}
-              max={12}
-              inputMode="numeric"
-              className="hp-input w-28"
-              value={diners}
-              onChange={(e) => setDiners(Number(e.target.value))}
-            />
-          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="hp-label sm:col-span-1">
+              Cook&apos;s name
+              <input
+                className="hp-input"
+                autoComplete="name"
+                value={cookName}
+                onChange={(e) => setCookName(e.target.value)}
+              />
+            </label>
+            <label className="hp-label">
+              Diners
+              <input
+                type="number"
+                min={1}
+                max={12}
+                inputMode="numeric"
+                className="hp-input w-full"
+                value={diners}
+                onChange={(e) => setDiners(Number(e.target.value))}
+              />
+            </label>
+            <label className="hp-label sm:col-span-1">
+              Allergies
+              <input
+                className="hp-input"
+                value={allergies}
+                onChange={(e) => setAllergies(e.target.value)}
+                placeholder="peanuts, shellfish"
+              />
+            </label>
+            <label className="hp-label">
+              Dislikes
+              <input
+                className="hp-input"
+                value={dislikes}
+                onChange={(e) => setDislikes(e.target.value)}
+                placeholder="very spicy…"
+              />
+            </label>
+          </div>
           <label className="hp-label">
             Pantry & voice notes
             <textarea
-              rows={6}
-              className="hp-textarea"
+              rows={3}
+              className="hp-textarea min-h-[4.5rem]"
               value={pantry}
               onChange={(e) => setPantry(e.target.value)}
             />
@@ -526,10 +557,18 @@ export default function HousePotApp() {
           <KitchenProgress active={loading && !run?.proposal} />
         </section>
 
-        <section className="space-y-4 sm:space-y-5" aria-labelledby="proposal-heading">
-          <h2 id="proposal-heading" className="hp-section-title lg:sr-only">
-            Tonight&apos;s proposal
-          </h2>
+        <section className="space-y-3" aria-labelledby="proposal-heading">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <h2 id="proposal-heading" className="hp-section-title text-xl sm:text-2xl">
+              Tonight&apos;s proposal
+            </h2>
+            <Link
+              href="/history"
+              className="text-xs font-semibold text-hp-sage underline decoration-hp-sage/30 underline-offset-2"
+            >
+              Pot history
+            </Link>
+          </div>
           {hydrating && (
             <p className="text-center text-sm text-zinc-500">Loading saved household…</p>
           )}
@@ -567,79 +606,75 @@ export default function HousePotApp() {
               </p>
             </div>
           )}
-          {run?.approvalQuestion && (
-            <p className="rounded-xl border border-hp-sky/30 bg-hp-sky/15 px-4 py-3 text-pretty text-sm text-hp-sage-deep">
-              {run.approvalQuestion}
-            </p>
-          )}
-          {run?.cookBrief && (
-            <p className="rounded-xl border border-hp-gold/40 bg-hp-gold/20 px-4 py-3 text-pretty text-sm italic text-hp-ink">
-              {run.cookBrief}
-            </p>
-          )}
-          {run?.kitchenBrain &&
-            (run.kitchenBrain.mealIdeas.length > 0 ||
-              run.kitchenBrain.foodFacts.length > 0 ||
-              run.kitchenBrain.criticNotes.length > 0) && (
-            <div className="hp-card text-sm text-zinc-700">
-              <p className="font-semibold text-hp-sage-deep">
-                Kitchen brain
-                {run.kitchenBrain.revised ? " · second model rewrote the pot" : ""}
-                {run.kitchenBrain.heat ? ` · ${run.kitchenBrain.heat}` : ""}
-              </p>
-              {run.kitchenBrain.criticModel && (
-                <p className="mt-1 text-xs text-zinc-500">
-                  Critic: {run.kitchenBrain.criticModel}
+          {(run?.approvalQuestion || run?.cookBrief) && (
+            <div className="space-y-2 text-sm">
+              {run.approvalQuestion && (
+                <p className="rounded-lg border border-hp-sky/30 bg-hp-sky/15 px-3 py-2 text-pretty text-hp-sage-deep">
+                  {run.approvalQuestion}
                 </p>
               )}
-              {run.kitchenBrain.mealIdeas.length > 0 && (
-                <p className="mt-2 text-xs">
-                  TheMealDB: {run.kitchenBrain.mealIdeas.join(" · ")}
+              {run.cookBrief && (
+                <p className="rounded-lg border border-hp-gold/40 bg-hp-gold/20 px-3 py-2 text-pretty italic text-hp-ink">
+                  {run.cookBrief}
                 </p>
               )}
-              {run.kitchenBrain.foodFacts.length > 0 && (
-                <ul className="mt-2 space-y-1 text-xs">
-                  {run.kitchenBrain.foodFacts.map((fact) => (
-                    <li key={fact.item}>
-                      Open Food Facts · {fact.item}
-                      {fact.product ? ` (${fact.product})` : ""}
-                      {fact.proteinPer100g !== undefined ? ` · ${fact.proteinPer100g}g protein/100g` : ""}
-                      {fact.allergens.length ? ` · ${fact.allergens.slice(0, 3).join(", ")}` : ""}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {run.kitchenBrain.criticNotes.map((note) => (
-                <p key={note} className="mt-1 text-xs">{note}</p>
-              ))}
             </div>
           )}
-          {run?.proposal && run.preferenceScore !== undefined && (
-            <div className="rounded-2xl border-2 border-hp-ink bg-hp-gold/35 px-4 py-3 text-sm text-hp-ink shadow-[3px_3px_0_0_var(--hp-ink)]">
-              <p className="hp-display text-xl tabular-nums">
-                Friend fit {run.preferenceScore}/100
-                {run.predictionSource ? ` · ${run.predictionSource}` : ""}
-              </p>
-              {run.fitReasons?.map((r) => (
-                <p key={r} className="mt-1 text-xs text-zinc-700">{r}</p>
-              ))}
-            </div>
-          )}
-          {run?.serpInspiration && run.serpInspiration.length > 0 && (
-            <ul className="hp-card text-xs text-zinc-700">
-              <p className="font-semibold text-hp-sage-deep">SerpApi meal ideas</p>
-              {run.serpInspiration.map((n) => (
-                <li key={n} className="mt-1 list-disc pl-4">{n}</li>
-              ))}
-            </ul>
-          )}
-          {run?.shoppingNotes && run.shoppingNotes.length > 0 && (
-            <ul className="hp-card text-xs text-zinc-700">
-              <p className="font-semibold text-hp-sage-deep">Shopping & SerpApi hints</p>
-              {run.shoppingNotes.map((n) => (
-                <li key={n} className="mt-1 list-disc pl-4">{n}</li>
-              ))}
-            </ul>
+          {(hasPlanningExtras ||
+            (run?.proposal && run.preferenceScore !== undefined) ||
+            (run?.serpInspiration && run.serpInspiration.length > 0) ||
+            (run?.shoppingNotes && run.shoppingNotes.length > 0)) && (
+            <details className="hp-card text-xs text-zinc-700">
+              <summary className="cursor-pointer font-semibold text-hp-sage-deep">
+                Planning & research (optional)
+              </summary>
+              <div className="mt-2 space-y-2">
+                {run?.proposal && run.preferenceScore !== undefined && (
+                  <p className="text-hp-ink">
+                    Friend fit {run.preferenceScore}/100
+                    {run.predictionSource ? ` · ${run.predictionSource}` : ""}
+                    {run.fitReasons?.length ? ` — ${run.fitReasons.join("; ")}` : ""}
+                  </p>
+                )}
+                {hasPlanningExtras && run.kitchenBrain && (
+                  <>
+                    <p className="font-medium text-hp-sage-deep">
+                      Kitchen brain
+                      {run.kitchenBrain.revised ? " · revised draft" : ""}
+                      {run.kitchenBrain.heat ? ` · ${run.kitchenBrain.heat}` : ""}
+                      {run.kitchenBrain.criticModel ? ` · ${run.kitchenBrain.criticModel}` : ""}
+                    </p>
+                    {run.kitchenBrain.mealIdeas.length > 0 && (
+                      <p>TheMealDB: {run.kitchenBrain.mealIdeas.join(" · ")}</p>
+                    )}
+                    {run.kitchenBrain.foodFacts.length > 0 && (
+                      <ul className="space-y-0.5">
+                        {run.kitchenBrain.foodFacts.slice(0, 4).map((fact) => (
+                          <li key={fact.item}>
+                            OFF · {fact.item}
+                            {fact.allergens.length ? ` (${fact.allergens.slice(0, 2).join(", ")})` : ""}
+                          </li>
+                        ))}
+                        {run.kitchenBrain.foodFacts.length > 4 && (
+                          <li className="text-zinc-500">
+                            +{run.kitchenBrain.foodFacts.length - 4} more facts
+                          </li>
+                        )}
+                      </ul>
+                    )}
+                    {run.kitchenBrain.criticNotes.map((note) => (
+                      <p key={note}>{note}</p>
+                    ))}
+                  </>
+                )}
+                {run?.serpInspiration && run.serpInspiration.length > 0 && (
+                  <p>SerpApi: {run.serpInspiration.join(" · ")}</p>
+                )}
+                {run?.shoppingNotes && run.shoppingNotes.length > 0 && (
+                  <p>Shopping: {run.shoppingNotes.join(" · ")}</p>
+                )}
+              </div>
+            </details>
           )}
           {run?.proposal && pantryReview && (
             <>
@@ -654,8 +689,8 @@ export default function HousePotApp() {
             </>
           )}
           {showApproveActions && pantryReview && (
-            <div className="flex flex-col gap-3">
-              <p className="text-sm leading-relaxed text-hp-sage-deep">
+            <div className="flex flex-col gap-2 rounded-xl border border-hp-sage/20 bg-hp-cream/80 p-3">
+              <p className="text-xs leading-relaxed text-hp-sage-deep sm:text-sm">
                 {pantryReview.safeToNarrate
                   ? pantryReview.missing.length === 0
                     ? "Every ingredient is already in the kitchen."
@@ -708,24 +743,24 @@ export default function HousePotApp() {
             </audio>
           )}
           {(run?.status === "narrated" || run?.status === "approved") && (
-            <div className="hp-card">
-              <label className="hp-label">
-                What did {cookName} say? (saved to Mongo memory)
+            <div className="hp-card space-y-2 p-3">
+              <label className="hp-label text-xs">
+                Feedback for {cookName} (Mongo memory)
                 <textarea
-                  rows={3}
-                  className="hp-textarea mt-2 min-h-[5rem]"
+                  rows={2}
+                  className="hp-textarea mt-1 min-h-[3.5rem]"
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
-                  placeholder="Too spicy / loved it / make again Thursday…"
+                  placeholder="Too spicy / loved it…"
                 />
               </label>
               <button
                 type="button"
                 onClick={submitFeedback}
                 disabled={loading || !feedback.trim()}
-                className="hp-btn-primary mt-3 disabled:opacity-50"
+                className="hp-btn-primary w-full text-sm disabled:opacity-50 sm:w-auto"
               >
-                Save friend feedback
+                Save feedback
               </button>
               {run.cookFeedback && (
                 <p className="mt-2 text-xs text-zinc-600">Last: {run.cookFeedback}</p>
@@ -749,14 +784,16 @@ export default function HousePotApp() {
           )}
           {run?.trace && (
             <details className="hp-card text-xs text-zinc-600">
-              <summary className="cursor-pointer font-mono font-medium text-hp-sage">Agent trace (Sentry-ready)</summary>
+              <summary className="cursor-pointer font-mono font-medium text-hp-sage">
+                Agent trace ({run.trace.length} steps)
+              </summary>
               <div className="mt-2 flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={downloadTrace}
                   className="text-[#3D5F58] underline"
                 >
-                  Trace JSON (Sentry)
+                  Trace JSON
                 </button>
                 <button
                   type="button"
@@ -766,12 +803,15 @@ export default function HousePotApp() {
                   Entire export
                 </button>
               </div>
-              <ul className="mt-2 space-y-1">
-                {run.trace.map((t) => (
+              <ul className="mt-2 max-h-40 space-y-0.5 overflow-y-auto font-mono text-[10px] leading-snug sm:text-xs">
+                {run.trace.slice(0, 20).map((t) => (
                   <li key={`${t.at}-${t.step}`}>
                     [{t.step}] {t.detail}
                   </li>
                 ))}
+                {run.trace.length > 20 && (
+                  <li className="text-zinc-500">…{run.trace.length - 20} more — download JSON</li>
+                )}
               </ul>
             </details>
           )}
