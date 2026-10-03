@@ -4,29 +4,66 @@ published: false
 tags: devchallenge, weekendchallenge, hf26challenge
 ---
 
-*Submission for [Hacktoberfest Weekend: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)*
+*Submission for [Hacktoberfest Weekend: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)* — `#hf26challenge`
 
-**House Pot** is a small kitchen app I built for **Amma**—the one who runs our stove in Dhaka, cooks from whatever came back from the **market**, and still remembers that my cousin cannot eat **peanuts** or **shrimp** (how we handle shellfish at home). Open-weight **Gemma** suggests one recipe; **plain TypeScript** checks the pantry and allergies; **ElevenLabs** reads the steps only after she taps approve on *that* card.
+**House Pot** is a small kitchen app for **Amma** in Dhaka: one recipe from tonight’s pantry, allergies checked in code, voice only after she approves.
 
-## What I Built
+## The problem
 
-In our flat, dinner is not a trending recipe. It is **red lentil dal**, **rice**, whatever **greens** were affordable that day, a simple **curry** if there is time, and always the question: *who is eating tonight, and who is allergic to what?* Amma does not want a foreign “AI chef.” She wants: *what can I cook with what we already have, without forgetting an allergy, and without staring at a wall of text while the rice is on the stove?*
+Weeknight dinner in our flat is not “pick a trending recipe.” It is **what came back from the market**, who is eating, and **who cannot eat peanuts or shellfish**. Recipe apps and generic AI chefs assume you will shop for their list, trust a prompt for safety, and read long steps while the rice is on the stove. That fails when:
 
-She types the pantry in plain English—`red lentils, onion, garlic, rice, cumin, spinach, yogurt`—or speaks it while the rice soaks. Gemma proposes **one** dish. The app then checks in **code**, not in the prompt:
+- the pantry is **fixed for tonight** (dal, rice, greens, whatever was affordable)
+- **allergy mistakes are not acceptable**—a cousin’s peanut reaction is not a disclaimer in a chat box
+- the cook wants **one clear answer**, not ten options and a wall of text
+- **voice help is welcome**, but not before she has seen and accepted the exact dish
 
-- each line is **in the kitchen** or **not in the pantry** (salt, water, oil, and pepper count as staples)
-- if anything matches an allergy—shrimp for shellfish, peanut oil for peanuts—the **Approve** button stays off
-- **ElevenLabs** speaks only after she approves, and only the recipe text—never her voice note from the phone
+## Who it's for
 
-**MongoDB Atlas** remembers the household: who cannot eat what, what we usually have after the Sunday market run, and what she said last week (“use less cumin next time”). So Tuesday’s dal is not explained from zero again.
+**Amma**—the person who actually runs our stove in Dhaka. She improvises from habit and memory, carries the household allergy list in her head, and does not want to feel like she is “talking to an AI chef.” House Pot is also for **family members** who share the same allergies and pantry, and for **anyone** in a similar setup: one cook, real constraints, approve-before-you-listen.
 
-**Real run from our kitchen (live smoke):** pantry = red lentils, onion, garlic, rice, cumin, spinach, yogurt; allergies = peanuts and shellfish; three diners. Gemma proposed **Mild Spinach and Red Lentil Dal with Rice**—a typical Dhaka weeknight. Every ingredient matched what was on the card. Narration waited until approve.
+Defaults in the app match our kitchen: cook name **Amma**, allergies **peanuts** and **shellfish**, pantry like `red lentils, onion, garlic, rice, cumin, spinach, yogurt`.
+
+## How I'm solving it
+
+| Goal | Approach |
+| --- | --- |
+| One dinner, not a feed | **Gemma** (open-weight, OpenAI-compatible) returns **one** structured JSON recipe from pantry + allergies + diners |
+| Safety you can see | **`pantry-check.ts`** marks each ingredient in-kitchen vs missing and **blocks Approve** on allergen matches—shrimp for shellfish, peanut oil for peanuts—not “the model said it’s fine” |
+| No surprise audio | **ElevenLabs** runs only after **Approve & read aloud** on **that** card; approve and narrate **re-run** the same checks |
+| Memory across nights | **MongoDB Atlas** stores household, pantry habits, run history, and post-dinner feedback (“less cumin next time”) |
+| Hands busy at the stove | Optional voice for pantry input; narration reads **approved recipe text only**, never the raw voice note |
+
+**Real run (live smoke):** pantry = red lentils, onion, garlic, rice, cumin, spinach, yogurt; allergies = peanuts and shellfish; three diners. Gemma proposed **Mild Spinach and Red Lentil Dal with Rice**. Every line matched the pantry; narration waited until approve.
+
+## Architecture
+
+**Stack:** Next.js (React UI + App Router API) on **Render**, **MongoDB Atlas** for persistence, **Gemma** for planning, **ElevenLabs** for TTS, optional **Mastra** workflow suspend when LibSQL is up.
+
+```text
+┌──────────────┐     ┌─────────────────┐     ┌──────────────────────┐
+│ HousePotApp  │────▶│ Next.js API     │────▶│ orchestrator.ts      │
+│ (browser)    │     │ propose/approve │     │ kitchen pipeline     │
+└──────────────┘     └────────┬────────┘     └──────────┬───────────┘
+                              │                         │
+                     ┌────────┴────────┐       ┌────────┴────────┐
+                     │ MongoDB Atlas   │       │ Gemma (JSON     │
+                     │ household/runs  │       │ recipe), OFF,   │
+                     └─────────────────┘       │ TheMealDB,      │
+                                               │ ElevenLabs TTS  │
+                                               └─────────────────┘
+```
+
+**Propose path (simplified):** load household memory → Gemma proposes recipe (optional critic pass) → deterministic pantry + allergen review → show card with marks → cook taps approve → ElevenLabs narrates that text (idempotent on retry).
+
+**Local vs live:** same app; **local** can use Ollama `gemma3:4b`, Whisper, TabPFN, Temporal. **Live demo** uses hosted `GEMMA_*` so judges click without installing Ollama (`GET /api/health` shows what is enabled).
 
 ## Demo
 
 **Live:** https://house-pot.onrender.com/
 
-No login—the browser saves one household id (see `/history?household=…` if you switch devices).
+**Example run history (smoke test):** https://house-pot.onrender.com/history?household=8c596887-5372-4c81-bd95-8ec1babe627b
+
+No login—the browser saves one household id on first visit (or open history with `?household=<uuid>`).
 
 **Path for judges** (Render free tier: first load after sleep can take ~60 seconds):
 
@@ -52,29 +89,17 @@ https://github.com/smriad/house-pot
 | `src/lib/mastra/kitchen-workflow.ts` | Approval suspend when Mastra storage is up |
 | `src/components/HousePotApp.tsx` | Kitchen UI |
 
-## How I Built It
+## Sponsor stack (challenge)
 
-| Layer | What it does |
+| Layer | Role in this architecture |
 | --- | --- |
-| **Gemma** | Proposes the recipe. **Local (Bangladesh):** `gemma3:4b` on Ollama—weights on hardware we control. **Live demo:** same client, hosted endpoint so a judge on mobile data does not install Ollama first. |
-| **Pantry check** | Deterministic safety—the model does not get to declare “allergy safe.” |
-| **MongoDB Atlas** | Household, pantry memory, run history, Amma’s feedback after dinner. |
-| **Mastra** | Workflow suspend on approval when LibSQL is up; UI gate still applies if Mastra is off. |
-| **ElevenLabs** | Reads approved steps aloud; idempotent narrate on retry. |
-| **Render** | `render.yaml` — public demo for the challenge. |
+| **Gemma** | Planning: JSON recipe from constraints. Local: `gemma3:4b` on Ollama. Live: hosted OpenAI-compatible API. |
+| **MongoDB Atlas** | Household profile, pantry memory, runs, feedback. |
+| **ElevenLabs** | TTS behind the approve gate only. |
+| **Render** | Public demo from `render.yaml`. |
+| **Mastra** (optional) | Suspend workflow until approval when LibSQL storage is available; UI gate always applies. |
 
-```text
-market / pantry text (English)
-  → MongoDB memory
-  → Gemma proposes one recipe
-  → code marks pantry + blocks allergens
-  → Amma approves that exact card
-  → ElevenLabs narrates that text
-```
-
-The approve button only makes sense when the card shows what is in the **shopping bag and the kitchen shelves**—not a black-box “trust me.” That is human-in-the-loop without rubber-stamping.
-
-Locally you can also run Whisper for pantry dictation, TabPFN for a friend-fit score, Temporal for durable narration, and Sentry on agent steps—`GET /api/health` shows what is live at home in Dhaka vs on Render.
+Human-in-the-loop only works when the card shows what is on the **shelves** and what would be **unsafe**—not a blind “trust me” approve button.
 
 ## Why Does Open Innovation Matter?
 

@@ -1,10 +1,34 @@
 # House Pot
 
-House Pot is a Next.js application that plans household meals from pantry constraints, enforces allergy and pantry checks in application code (not only in prompts), requires explicit human approval before any text-to-speech, and persists cook profiles and run history in MongoDB Atlas.
+Next.js app for a household cook: one recipe from tonight’s pantry, allergies enforced in code, ElevenLabs TTS only after explicit approve. Hacktoberfest “Build for a Friend” write-up: [`SUBMISSION.md`](./SUBMISSION.md).
 
 **Live:** https://house-pot.onrender.com/  
 **Local:** http://localhost:3000 (`npm run dev`)  
 **Repository:** https://github.com/smriad/house-pot
+
+## The problem
+
+Weeknight dinner is driven by **what is already in the kitchen** (post-market dal, rice, greens), **who is eating**, and **who cannot eat peanuts or shellfish**—not by shopping for a trending recipe. Generic meal apps and chat chefs assume you will buy their ingredient list, trust prompt-only “allergy safe” claims, and read long steps while rice is on the stove. House Pot targets cooks who need **one clear dish**, **visible safety checks**, and **no narration** until they accept that exact card.
+
+## Who it's for
+
+Built for **Amma**, the cook in our Dhaka household: improvises from habit, keeps the family allergy list, and does not want a generic “AI chef” experience. The same model fits **family members** on one pantry and allergy profile. UI defaults match our kitchen: cook **Amma**, allergies **peanuts** and **shellfish**, sample pantry `red lentils, onion, garlic, rice, cumin, spinach, yogurt`.
+
+## How we're solving it
+
+| Goal | Approach |
+| --- | --- |
+| One dinner, not a feed | **Gemma** (`GEMMA_*`, OpenAI-compatible) returns one **JSON** recipe from pantry + allergies + diners (optional critic pass, cook brief) |
+| Safety you can see | **`pantry-check.ts`** marks in-kitchen vs missing; **blocks Approve** on allergen matches (e.g. shrimp → shellfish); Open Food Facts when available |
+| No surprise audio | **ElevenLabs** only after **Approve & read aloud**; approve and narrate **re-run** the same checks (idempotent narrate on retry) |
+| Memory across nights | **MongoDB Atlas** (or local `.data/house-pot.json`) for household, runs, feedback |
+| Hands at the stove | Browser speech, Scribe, or optional Whisper for pantry input; TTS gets **approved recipe text**, not the voice note |
+
+## Architecture (summary)
+
+**Stack:** Next.js (React + App Router APIs) on **Render** · **MongoDB Atlas** · **Gemma** planning · **ElevenLabs** TTS · optional **Mastra** suspend-on-approve when LibSQL is up.
+
+**Flow:** household memory → propose (Gemma + optional grounding) → deterministic pantry/allergen review → recipe card → human approve → narrate. Full diagram, `startKitchenRun` step table, and API routes are in [Architecture](#architecture) below.
 
 ---
 
@@ -53,18 +77,6 @@ TEMPORAL_NARRATE=false
 ```
 
 Use the in-app **Sponsor integrations** panel or `GET /api/health` on each environment to see which probes are `live`.
-
----
-
-## Overview
-
-The product targets a single household cook who needs a structured recipe from available ingredients while respecting allergies and dislikes. The system separates three concerns:
-
-1. **Planning** — an OpenAI-compatible LLM (`GEMMA_*`) emits a JSON recipe (draft, optional critic pass, optional one-line cook brief).
-2. **Safety** — deterministic pantry matching and allergen detection (`pantry-check.ts`), augmented by Open Food Facts allergen tags when available.
-3. **Delivery** — ElevenLabs narrates **only** after the cook approves; narration requests are idempotent to avoid duplicate API charges on retry.
-
-Voice input may use browser speech, ElevenLabs Scribe, or optional local Whisper (`POST /api/transcribe`). Raw voice is not sent to the narration provider.
 
 ---
 
