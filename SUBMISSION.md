@@ -27,11 +27,21 @@ Defaults in the app match our kitchen: cook name **Amma**, allergies **peanuts**
 
 | Goal | Approach |
 | --- | --- |
-| One dinner, not a feed | **Gemma** (open-weight, OpenAI-compatible) returns **one** structured JSON recipe from pantry + allergies + diners |
-| Safety you can see | **`pantry-check.ts`** marks each ingredient in-kitchen vs missing and **blocks Approve** on allergen matches—shrimp for shellfish, peanut oil for peanuts—not “the model said it’s fine” |
-| No surprise audio | **ElevenLabs** runs only after **Approve & read aloud** on **that** card; approve and narrate **re-run** the same checks |
-| Memory across nights | **MongoDB Atlas** stores household, pantry habits, run history, and post-dinner feedback (“less cumin next time”) |
-| Hands busy at the stove | Optional voice for pantry input; narration reads **approved recipe text only**, never the raw voice note |
+| One dinner, not a feed | **Gemma** (`GEMMA_*`, OpenAI-compatible) returns **one** structured JSON recipe; optional **critic** pass may revise once |
+| Safety you can see | **`pantry-check.ts`** marks in-kitchen vs missing and **blocks Approve** on allergen matches (shrimp → shellfish, peanut oil → peanuts); **Open Food Facts** when available—not “the model said it’s fine” |
+| No surprise audio | **ElevenLabs** runs only after **Approve & read aloud** on **that** card; approve and narrate **re-run** the same checks (idempotent narrate on retry) |
+| Memory across nights | **MongoDB Atlas** (or local `.data/house-pot.json` fallback) stores household, pantry habits, run history, and feedback (“less cumin next time”) |
+| Hands busy at the stove | Browser speech, Scribe, or optional Whisper for pantry input; narration reads **approved recipe text only**, never the raw voice note |
+
+**Design split:** **plan** (probabilistic Gemma JSON) → **policy** (deterministic pantry + allergen code) → **deliver** (TTS gated on approve). Human approval binds to **this** card version; a stale “yes” cannot narrate a recipe that now fails checks.
+
+| Requirement (Amma) | Engineering |
+| --- | --- |
+| Cook from tonight’s pantry | `POST /api/runs` → orchestrator propose |
+| Allergies enforced outside the model | `PantryReview.canApprove` / `safeToNarrate` |
+| Auditable for family / judges | Ingredient marks on card; `GET /api/runs/:id/trace` |
+
+Full BRD table, C4 diagrams, and state machine: [README on GitHub](https://github.com/smriad/house-pot#requirements-traceability-brd--engineering).
 
 **Real run (live smoke):** pantry = red lentils, onion, garlic, rice, cumin, spinach, yogurt; allergies = peanuts and shellfish; three diners. Gemma proposed **Mild Spinach and Red Lentil Dal with Rice**. Every line matched the pantry; narration waited until approve.
 
@@ -39,29 +49,38 @@ Defaults in the app match our kitchen: cook name **Amma**, allergies **peanuts**
 
 **Stack:** Next.js (React UI + App Router API) on **Render**, **MongoDB Atlas** for persistence, **Gemma** for planning, **ElevenLabs** for TTS, optional **Mastra** workflow suspend when LibSQL is up.
 
-```text
-┌──────────────┐     ┌─────────────────┐     ┌──────────────────────┐
-│ HousePotApp  │────▶│ Next.js API     │────▶│ orchestrator.ts      │
-│ (browser)    │     │ propose/approve │     │ kitchen pipeline     │
-└──────────────┘     └────────┬────────┘     └──────────┬───────────┘
-                              │                         │
-                     ┌────────┴────────┐       ┌────────┴────────┐
-                     │ MongoDB Atlas   │       │ Gemma (JSON     │
-                     │ household/runs  │       │ recipe), OFF,   │
-                     └─────────────────┘       │ TheMealDB,      │
-                                               │ ElevenLabs TTS  │
-                                               └─────────────────┘
+```mermaid
+sequenceDiagram
+  participant U as Browser
+  participant API as Next.js API
+  participant O as orchestrator
+  participant G as Gemma
+  participant P as pantry-check
+  participant E as ElevenLabs
+
+  U->>API: POST /api/runs
+  API->>O: startKitchenRun
+  O->>G: propose JSON recipe
+  O->>P: reviewPantry(allergies)
+  P-->>O: canApprove + marks
+  API-->>U: recipe card
+
+  U->>API: POST approve
+  API->>P: re-check
+  U->>API: POST narrate
+  API->>P: re-check
+  API->>E: TTS approved text only
 ```
 
-**Propose path (simplified):** load household memory → Gemma proposes recipe (optional critic pass) → deterministic pantry + allergen review → show card with marks → cook taps approve → ElevenLabs narrates that text (idempotent on retry).
+**Propose path (simplified):** load household memory → Gemma proposes recipe (optional critic) → deterministic pantry + allergen review → show card with marks → cook taps approve → ElevenLabs narrates that text.
 
-**Local vs live:** same app; **local** can use Ollama `gemma3:4b`, Whisper, TabPFN, Temporal. **Live demo** uses hosted `GEMMA_*` so judges click without installing Ollama (`GET /api/health` shows what is enabled).
+**Local vs live:** same codebase. **Local** can use Ollama `gemma3:4b`, Whisper, TabPFN Python scoring, Temporal workers. **Live demo** uses hosted `GEMMA_*` so judges click without Ollama; Render sets `TABPFN_DISABLE=true` and a fast heuristic so propose stays responsive on free tier (`GET /api/health` shows what is enabled).
 
 ## Demo
 
 **Live:** https://house-pot.onrender.com/
 
-**Short demo video (~75s):** https://house-pot.onrender.com/demo.mp4 (cover + kitchen UI + ElevenLabs narration after approve)
+**Short demo video (~70s):** https://house-pot.onrender.com/demo.mp4 (cover + kitchen UI + ElevenLabs narration after approve)
 
 **Example run (pre-publish pass):** https://house-pot.onrender.com/?run=bc1c4411-5d4b-42a3-ab04-97b0346b53ea — **Mild Spinach and Red Lentil Dal with Rice**, narrated
 
@@ -87,11 +106,14 @@ https://github.com/smriad/house-pot
 
 | Path | Role |
 | --- | --- |
-| `src/lib/gemma.ts` | OpenAI-compatible JSON recipe from Gemma |
-| `src/lib/kitchen/pantry-check.ts` | Pantry match + allergy block |
+| `src/lib/gemma.ts` | OpenAI-compatible JSON recipe; `extractRecipeJsonText` for messy model output |
+| `src/lib/kitchen/pantry-check.ts` | Pantry match + allergy block (system of record) |
 | `src/lib/kitchen/orchestrator.ts` | Propose → check → approve → narrate |
+| `src/lib/kitchen/critic.ts` | Optional second Gemma pass |
+| `src/lib/db/store.ts` | MongoDB Atlas + `.data` JSON fallback |
 | `src/lib/mastra/kitchen-workflow.ts` | Approval suspend when Mastra storage is up |
 | `src/components/HousePotApp.tsx` | Kitchen UI |
+| `render.yaml` | Render Blueprint (`TABPFN_DISABLE`, `TEMPORAL_NARRATE=false`) |
 
 ## Sponsor stack (challenge)
 
