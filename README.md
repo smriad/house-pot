@@ -2,8 +2,57 @@
 
 House Pot is a Next.js application that plans household meals from pantry constraints, enforces allergy and pantry checks in application code (not only in prompts), requires explicit human approval before any text-to-speech, and persists cook profiles and run history in MongoDB Atlas.
 
-**Production:** https://house-pot.onrender.com/  
+**Live:** https://house-pot.onrender.com/  
+**Local:** http://localhost:3000 (`npm run dev`)  
 **Repository:** https://github.com/smriad/house-pot
+
+---
+
+## Local vs live
+
+| | **Local** (`npm run dev`) | **Live** ([Render](https://house-pot.onrender.com/)) |
+| --- | --- | --- |
+| **Purpose** | Full stack, open-weight Gemma, debugging | Public demo for judges and cooks |
+| **App URL** | `http://localhost:3000` | `https://house-pot.onrender.com` |
+| **Health probe** | `http://localhost:3000/api/health` | `https://house-pot.onrender.com/api/health` |
+| **History** | `/history` (uses `localStorage` household id) | Same; or `/history?household=<uuid>` |
+| **LLM** | Ollama `gemma3:4b` at `127.0.0.1:11434` (recommended) | Hosted OpenAI-compatible API (`GEMMA_*` on Render) |
+| **Gemma model** | `GEMMA_MODEL=gemma3:4b` | e.g. `gemini-3.8-flash` or `gemma-4-26b-a4b-it` on AI Studio |
+| **Database** | Atlas **or** `.data/house-pot.json` if `MONGODB_URI` unset | MongoDB Atlas (`MONGODB_URI` required for persistent history) |
+| **Embeddings** | Ollama `nomic-embed-text` | Google `text-embedding-004` when `GEMMA_*` is AI Studio |
+| **Whisper STT** | Yes (`pip install -r requirements.txt`, `POST /api/transcribe`) | No on default Node blueprint |
+| **TabPFN score** | Yes if Python + `requirements-tabpfn.txt` | Heuristic fallback only |
+| **Temporal narration** | Yes with `npm run temporal:up` + worker | Off (`TEMPORAL_NARRATE=false` in `render.yaml`) |
+| **Mastra LibSQL** | `.data/mastra.db` after first approve | Ephemeral disk on free tier |
+| **ElevenLabs** | API key in `.env.local` | Same keys in Render dashboard |
+| **TheMealDB / Open Food Facts** | Yes (public HTTP) | Yes |
+| **SerpApi / Backboard / Tiger** | Optional env keys | Optional env keys |
+| **Cold start** | None | Free tier may sleep; first request up to ~60s |
+| **CI smoke** | `npm run smoke:prod` hits **live** only | GitHub Actions `live-smoke.yml` |
+
+**Typical local `.env.local`:**
+
+```env
+GEMMA_BASE_URL=http://127.0.0.1:11434/v1
+GEMMA_API_KEY=ollama
+GEMMA_MODEL=gemma3:4b
+MONGODB_URI=<Atlas or leave empty for .data JSON>
+ELEVENLABS_API_KEY=<key>
+```
+
+**Typical live (Render) env:**
+
+```env
+NEXT_PUBLIC_APP_URL=https://house-pot.onrender.com
+GEMMA_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+GEMMA_API_KEY=<AI Studio key>
+GEMMA_MODEL=gemini-3.8-flash
+MONGODB_URI=<Atlas connection string>
+ELEVENLABS_API_KEY=<key>
+TEMPORAL_NARRATE=false
+```
+
+Use the in-app **Sponsor integrations** panel or `GET /api/health` on each environment to see which probes are `live`.
 
 ---
 
@@ -199,11 +248,7 @@ GEMMA_API_KEY=<AI Studio key>
 GEMMA_MODEL=gemini-3.8-flash
 ```
 
-Use Ollama (`gemma3:4b`) on your own hardware for open-weight Gemma; use `gemma-4-26b-a4b-it` on AI Studio when the OpenAI shim exposes that model for your account.
-
-**Not available on default Render Node build:** local Whisper, TabPFN, Ollama embeddings, Temporal worker. Use the `Dockerfile` on a compute host that supports Python, or run those features only in local development.
-
-**Cold starts:** free Render services sleep when idle; allow up to ~60s on the first request after idle.
+See **[Local vs live](#local-vs-live)** for capability differences. For Whisper on a host, use the `Dockerfile` instead of the default Render Node blueprint.
 
 ---
 
