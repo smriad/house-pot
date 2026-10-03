@@ -1,30 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Household, KitchenRun, PantryMemory, Recipe } from "@/lib/types";
 import IntegrationsPanel from "@/components/IntegrationsPanel";
 import KitchenProgress from "@/components/KitchenProgress";
+import { cookApprovedRun, runStatusLabel } from "@/lib/kitchen/run-display";
 
 const STORAGE_KEY = "house-pot-household-id";
 const RUN_STORAGE_KEY = "house-pot-last-run-id";
 
-function runStatusLabel(status: KitchenRun["status"]): string {
-  switch (status) {
-    case "awaiting_approval":
-      return "Awaiting cook approval";
-    case "approved":
-      return "Approved — ready to narrate";
-    case "narrated":
-      return "Narrated";
-    case "failed":
-      return "Step failed — you can retry below";
-    default:
-      return status;
-  }
-}
-
-function cookApprovedRun(run: KitchenRun): boolean {
-  return run.trace.some((t) => t.step === "approve" && t.detail.includes("approved"));
+function runStatusLabelKitchen(status: KitchenRun["status"]): string {
+  const base = runStatusLabel(status);
+  if (status === "awaiting_approval") return "Awaiting cook approval";
+  if (status === "approved") return "Approved — ready to narrate";
+  if (status === "failed") return "Step failed — you can retry below";
+  return base;
 }
 
 type SpeechRecognitionCtor = new () => {
@@ -190,7 +181,8 @@ export default function HousePotApp() {
           setPantryMemories(j.memories ?? []);
         }
         await refreshRunHistory(id);
-        const lastRunId = localStorage.getItem(RUN_STORAGE_KEY);
+        const runFromUrl = new URLSearchParams(window.location.search).get("run");
+        const lastRunId = runFromUrl ?? localStorage.getItem(RUN_STORAGE_KEY);
         if (lastRunId) await loadRunById(lastRunId);
       } finally {
         setHydrating(false);
@@ -385,6 +377,12 @@ export default function HousePotApp() {
           Open-weight Gemma plans the meal from what is in the kitchen. MongoDB remembers the pantry.
           ElevenLabs reads the recipe aloud only after {cookName || "your cook"} taps approve.
         </p>
+        <Link
+          href="/history"
+          className="mt-4 inline-block rounded-full border border-[#F2F2EB]/35 px-4 py-1.5 text-sm font-medium text-[#F2F2EB] hover:bg-[#F2F2EB]/10"
+        >
+          View pot history →
+        </Link>
         {health && (
           <p className="mt-4 font-mono text-xs text-[#F5B726]">
             gemma:{String(health.gemma)} · {String(health.storage ?? "local")} · elevenlabs:
@@ -496,7 +494,7 @@ export default function HousePotApp() {
                 <option value="">Select a past run…</option>
                 {runHistory.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.proposal?.title ?? "Run"} · {runStatusLabel(r.status)} ·{" "}
+                    {r.proposal?.title ?? "Run"} · {runStatusLabelKitchen(r.status)} ·{" "}
                     {new Date(r.createdAt).toLocaleString()}
                   </option>
                 ))}
@@ -505,7 +503,7 @@ export default function HousePotApp() {
           )}
           {run && (
             <p className="rounded-lg bg-white/80 px-3 py-2 font-mono text-xs text-[#3D5F58]">
-              Status: {runStatusLabel(run.status)}
+              Status: {runStatusLabelKitchen(run.status)}
             </p>
           )}
           {!run?.proposal && !loading && (

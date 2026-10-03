@@ -1,8 +1,5 @@
-import { execFile } from "child_process";
-import { promisify } from "util";
+import { execFile } from "node:child_process/promises";
 import type { Household, Recipe } from "@/lib/types";
-
-const execFileAsync = promisify(execFile);
 
 function pythonBin(): string {
   return (
@@ -20,7 +17,7 @@ export type TabpfnResult = {
 
 export async function probeTabpfn(): Promise<boolean> {
   try {
-    const { stdout } = await execFileAsync(
+    const { stdout } = await execFile(
       pythonBin(),
       ["-c", "import tabpfn; print('ok')"],
       { timeout: 45_000 },
@@ -52,7 +49,7 @@ export async function predictMealFit(
 
   const script = `${process.cwd()}/scripts/tabpfn_score.py`;
   try {
-    const { stdout } = await execFileAsync(pythonBin(), [script], {
+    const { stdout } = await execFile(pythonBin(), [script], {
       timeout: 120_000,
       maxBuffer: 1_048_576,
       env: { ...process.env, PYTHONUNBUFFERED: "1" },

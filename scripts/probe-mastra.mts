@@ -1,4 +1,4 @@
-import { startApprovalGate } from "../src/lib/mastra/approval-gate.ts";
+import { startApprovalGate } from "../src/lib/mastra/approval-gate";
 import { existsSync } from "fs";
 
 const r = await startApprovalGate({
