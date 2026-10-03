@@ -62,7 +62,7 @@ async function getMongo(): Promise<Db> {
   const uri = process.env.MONGODB_URI;
   if (!uri) throw new Error("MONGODB_URI not set");
   const { MongoClient } = await import("mongodb");
-  mongoClient = new MongoClient(uri);
+  mongoClient = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
   await mongoClient.connect();
   mongoDb = mongoClient.db("house_pot");
   return mongoDb;

@@ -24,11 +24,16 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const json = await req.json();
-  const parsed = bodySchema.safeParse(json);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  try {
+    const json = await req.json();
+    const parsed = bodySchema.safeParse(json);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    }
+    const household = await upsertHousehold(parsed.data);
+    return NextResponse.json(household);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to save household";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-  const household = await upsertHousehold(parsed.data);
-  return NextResponse.json(household);
 }
