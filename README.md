@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# House Pot
 
-## Getting Started
+**Build for a Friend** — Hacktoberfest Weekend Challenge entry.
 
-First, run the development server:
+Phone-friendly web app for the household cook: pantry in → **open-weight Gemma** recipe out → human **approve** → **ElevenLabs** reads steps aloud.
+
+## Integrations
+
+| Sponsor / OSS | Status in app |
+| --- | --- |
+| **Gemma** | Meal planning via OpenAI-compatible API (`GEMMA_*`); auto-probes Ollama at `127.0.0.1:11434` |
+| **Whisper** | Optional server transcription (`POST /api/transcribe`, `scripts/transcribe.py`) |
+| **MongoDB Atlas** | Household + pantry + friend feedback memory |
+| **Mastra** | Suspend/approve workflow (`@mastra/libsql` + `kitchen-workflow`) |
+| **ElevenLabs** | Post-approval narration only |
+| **SerpApi** | Substitute hints when pantry mentions missing items |
+| **Sentry** | Agent spans on each orchestration step (`withAgentSpan`) |
+| **Render** | `render.yaml` + `Dockerfile` (standalone Next output) |
+
+Durable narration uses **idempotent steps** (`lib/durable/steps.ts`) so retries do not double-charge ElevenLabs.
+
+## Quick start
 
 ```bash
+cp .env.example .env.local
+# Add ELEVENLABS_API_KEY, optional MONGODB_URI, SERPAPI_API_KEY, SENTRY_DSN
+# Gemma: ollama pull gemma3:4b  (or set GEMMA_BASE_URL)
+# Whisper (optional): pip install -r requirements.txt
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Route | Purpose |
+| --- | --- |
+| `POST /api/household` | Cook profile + allergies |
+| `POST /api/transcribe` | Upload audio → local Whisper text |
+| `POST /api/runs` | Propose recipe |
+| `POST /api/runs/:id/approve` | `{ approved, autoNarrate? }` |
+| `POST /api/runs/:id/narrate` | ElevenLabs MP3 |
+| `POST /api/runs/:id/feedback` | Friend quote → Mongo memory |
+| `GET /api/health` | Live integration probe |
 
-## Learn More
+## Deploy (Render)
 
-To learn more about Next.js, take a look at the following resources:
+1. Connect repo, use `render.yaml` or Docker.
+2. Set env vars from `.env.example`.
+3. For Whisper in production, use the `Dockerfile` (installs Python + whisper).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## DEV submission
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+See `SUBMISSION.md` and your draft on DEV (edit before Monday 12:59 PM Asia/Dhaka).
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT

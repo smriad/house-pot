@@ -6,21 +6,42 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "temporal:worker": "tsx scripts/temporal-worker.ts",
+    "temporal:up": "docker compose -f docker-compose.temporal.yml up -d",
+    "stack:up": "bash scripts/live-stack.sh",
+    "stack:down": "docker compose -f docker-compose.local.yml down"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.70.0",
+    "@mastra/core": "^1.74.0",
+    "@mastra/libsql": "^1.25.0",
+    "@sentry/nextjs": "^11.4.0",
+    "@temporalio/activity": "^1.24.0",
+    "@temporalio/client": "^1.24.0",
+    "@temporalio/worker": "^1.24.0",
+    "@temporalio/workflow": "^1.24.0",
+    "mongodb": "^7.7.0",
     "next": "16.3.8",
+    "openai": "^7.27.0",
+    "pg": "^8.23.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "serpapi": "^2.2.1",
+    "uuid": "^14.0.2",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
+    "tsx": "^4.20.5",
     "typescript": "^5"
   }
 }

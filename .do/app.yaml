@@ -1,0 +1,27 @@
+# DigitalOcean App Platform — Best Use of DigitalOcean (deploy path)
+name: house-pot
+region: nyc
+services:
+  - name: web
+    github:
+      repo: YOUR_GITHUB_USER/house-pot
+      branch: main
+      deploy_on_push: true
+    source_dir: /
+    build_command: npm install && npm run build
+    run_command: npm run start
+    http_port: 3000
+    health_check:
+      http_path: /api/health
+    envs:
+      - key: NODE_VERSION
+        value: "22"
+      - key: GEMMA_BASE_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: MONGODB_URI
+        scope: RUN_TIME
+        type: SECRET
+      - key: ELEVENLABS_API_KEY
+        scope: RUN_TIME
+        type: SECRET
