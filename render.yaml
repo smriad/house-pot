@@ -9,6 +9,9 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22.13.0
+      # Public URL after first deploy — e.g. https://house-pot.onrender.com
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
       - key: GEMMA_BASE_URL
         sync: false
       - key: GEMMA_API_KEY
@@ -19,9 +22,9 @@ services:
         sync: false
       - key: ELEVENLABS_API_KEY
         sync: false
-      - key: SERPAPI_API_KEY
+      - key: ELEVENLABS_VOICE_ID
         sync: false
-      - key: TEMPORAL_ADDRESS
+      - key: SERPAPI_API_KEY
         sync: false
       - key: MONGODB_VECTOR_INDEX
         sync: false
@@ -31,5 +34,10 @@ services:
         sync: false
       - key: SENTRY_DSN
         sync: false
+      - key: NEXT_PUBLIC_SENTRY_DSN
+        sync: false
       - key: TIGER_DATABASE_URL
         sync: false
+      # Free tier: no Temporal worker — narration runs in-process
+      - key: TEMPORAL_NARRATE
+        value: "false"
