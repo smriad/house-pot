@@ -63,11 +63,44 @@ export async function probeTabpfn(): Promise<boolean> {
   }
 }
 
+function heuristicMealFit(
+  household: Household,
+  recipe: Recipe,
+  memorySnippets: string[],
+): TabpfnResult {
+  const memoryText = memorySnippets.join(" ").toLowerCase();
+  const diners = recipe.servings;
+  const allergies = household.allergies.length;
+  const pantry_len = recipe.ingredients.length;
+  const steps = recipe.steps.length;
+  const spicy = /chili|spicy|cayenne|hot sauce/i.test(
+    `${recipe.title} ${recipe.summary}`,
+  )
+    ? 1
+    : 0;
+  const memory_pos = /loved|again|favorite|perfect/i.test(memoryText) ? 1 : 0;
+  let score =
+    70 + Math.min(pantry_len, 20) * 0.5 - allergies * 8 - spicy * 10 + memory_pos * 12;
+  score = Math.max(5, Math.min(98, score));
+  return {
+    score: Math.round(score),
+    source: "heuristic-fallback",
+    reason: "TabPFN script unavailable; using inline fallback",
+  };
+}
+
 export async function predictMealFit(
   household: Household,
   recipe: Recipe,
   memorySnippets: string[],
 ): Promise<TabpfnResult> {
+  if (process.env.TABPFN_DISABLE === "true") {
+    return heuristicMealFit(household, recipe, memorySnippets);
+  }
+  const tabpfnReady = await probeTabpfn();
+  if (!tabpfnReady) {
+    return heuristicMealFit(household, recipe, memorySnippets);
+  }
   const memoryText = memorySnippets.join(" ").toLowerCase();
   const features = {
     diners: recipe.servings,

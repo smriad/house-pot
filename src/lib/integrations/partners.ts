@@ -27,10 +27,19 @@ export async function getPartnerDeployStatus(): Promise<PartnerDeployStatus> {
 }
 
 export async function probeMastraStorage(): Promise<boolean> {
+  const dataDir = path.join(process.cwd(), ".data");
   try {
-    await fs.access(path.join(process.cwd(), ".data", "mastra.db"));
+    await fs.mkdir(dataDir, { recursive: true });
+    await fs.access(path.join(dataDir, "mastra.db"));
     return true;
   } catch {
-    return false;
+    try {
+      const probe = path.join(dataDir, ".mastra-write-probe");
+      await fs.writeFile(probe, "ok");
+      await fs.unlink(probe);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

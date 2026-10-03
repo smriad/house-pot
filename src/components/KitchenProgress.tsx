@@ -15,7 +15,7 @@ export default function KitchenProgress({ active }: { active: boolean }) {
     <div className="hp-card border-hp-sage/20" role="status" aria-live="polite">
       <p className="hp-display text-2xl text-hp-sage-deep">Kitchen agent working…</p>
       <p className="mt-1 text-pretty text-xs text-zinc-600 sm:text-sm">
-        First TabPFN run can take 1–2 minutes on a cold start. Keep this tab open.
+        Gemma and pantry checks can take up to a minute on a cold Render instance. Keep this tab open.
       </p>
       <ul className="mt-4 space-y-2.5">
         {STEPS.map((label, i) => (

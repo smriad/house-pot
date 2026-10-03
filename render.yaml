@@ -41,3 +41,6 @@ services:
       # Free tier: no Temporal worker — narration runs in-process
       - key: TEMPORAL_NARRATE
         value: "false"
+      # No Python TabPFN on Node blueprint — skip 120s script wait on propose
+      - key: TABPFN_DISABLE
+        value: "true"

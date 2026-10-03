@@ -61,6 +61,10 @@ Defaults in the app match our kitchen: cook name **Amma**, allergies **peanuts**
 
 **Live:** https://house-pot.onrender.com/
 
+**Short demo video (~75s):** https://house-pot.onrender.com/demo.mp4 (cover + kitchen UI + ElevenLabs narration after approve)
+
+**Example run (pre-publish pass):** https://house-pot.onrender.com/?run=bc1c4411-5d4b-42a3-ab04-97b0346b53ea — **Mild Spinach and Red Lentil Dal with Rice**, narrated
+
 **Example run history (smoke test):** https://house-pot.onrender.com/history?household=8c596887-5372-4c81-bd95-8ec1babe627b
 
 No login—the browser saves one household id on first visit (or open history with `?household=<uuid>`).
