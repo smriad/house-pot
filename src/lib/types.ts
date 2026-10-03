@@ -43,6 +43,23 @@ export const recipeSchema = z.object({
 
 export type Recipe = z.infer<typeof recipeSchema>;
 
+export type FoodFact = {
+  item: string;
+  product?: string;
+  allergens: string[];
+  proteinPer100g?: number;
+  kcalPer100g?: number;
+};
+
+export type KitchenBrain = {
+  mealIdeas: string[];
+  foodFacts: FoodFact[];
+  criticNotes: string[];
+  criticModel?: string;
+  heat?: string;
+  revised: boolean;
+};
+
 export type RunStatus =
   | "awaiting_approval"
   | "approved"
@@ -67,6 +84,9 @@ export type KitchenRun = {
   mastraRunId?: string;
   approvalQuestion?: string;
   pantryReview?: PantryReview;
+  kitchenBrain?: KitchenBrain;
+  /** LLM one-liner for the cook after propose (same GEMMA endpoint). */
+  cookBrief?: string;
   cookFeedback?: string;
   trace: RunTraceEvent[];
   idempotencyKey: string;

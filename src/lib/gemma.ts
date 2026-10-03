@@ -61,6 +61,7 @@ export async function proposeRecipe(params: {
   memorySnippets: string[];
   substituteHints: string[];
   serpInspiration?: string[];
+  publicRecipeIdeas?: string[];
 }): Promise<Recipe> {
   const reachable = await probeGemma();
   if (!reachable && !isGemmaConfigured()) {
@@ -75,6 +76,7 @@ Prefer ingredients named in the pantry. You may list something missing, but neve
 Respond with a single JSON object only — no markdown fences, no <thought> tags, no prose before or after.
 Match schema fields: title, summary, servings, ingredients (item, amount, optional substitute), steps, allergyWarnings, openSourceRationale.
 allergyWarnings lists allergens you considered and then left out.
+openSourceRationale must say this recipe was planned with ${model}. Do not name any other model family.
 openSourceRationale must explain why a local open-weight model is appropriate (privacy, offline, no vendor lock-in).`;
 
   const user = JSON.stringify(
@@ -89,6 +91,7 @@ openSourceRationale must explain why a local open-weight model is appropriate (p
       pastPantryMemories: params.memorySnippets,
       substituteResearch: params.substituteHints,
       serpMealIdeas: params.serpInspiration ?? [],
+      publicRecipeIdeas: params.publicRecipeIdeas ?? [],
     },
     null,
     2,
@@ -122,6 +125,39 @@ openSourceRationale must explain why a local open-weight model is appropriate (p
     }
   }
   throw lastError instanceof Error ? lastError : new Error("Gemma request failed");
+}
+
+export function gemmaModelName(): string {
+  return process.env.GEMMA_MODEL?.trim() || "gemma3:4b";
+}
+
+/** Second-pass chat. Returns null when the endpoint is down so the cook still gets the first draft. */
+export async function kitchenChat(system: string, user: string): Promise<string | null> {
+  const model = gemmaModelName();
+  const messages = [
+    { role: "system" as const, content: system },
+    { role: "user" as const, content: user },
+  ];
+  try {
+    const completion = await client().chat.completions.create({
+      model,
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages,
+    });
+    return completion.choices[0]?.message?.content ?? null;
+  } catch {
+    try {
+      const completion = await client().chat.completions.create({
+        model,
+        temperature: 0.2,
+        messages,
+      });
+      return completion.choices[0]?.message?.content ?? null;
+    } catch {
+      return null;
+    }
+  }
 }
 
 function demoRecipe(params: {

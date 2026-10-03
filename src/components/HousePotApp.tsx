@@ -572,6 +572,48 @@ export default function HousePotApp() {
               {run.approvalQuestion}
             </p>
           )}
+          {run?.cookBrief && (
+            <p className="rounded-xl border border-hp-gold/40 bg-hp-gold/20 px-4 py-3 text-pretty text-sm italic text-hp-ink">
+              {run.cookBrief}
+            </p>
+          )}
+          {run?.kitchenBrain &&
+            (run.kitchenBrain.mealIdeas.length > 0 ||
+              run.kitchenBrain.foodFacts.length > 0 ||
+              run.kitchenBrain.criticNotes.length > 0) && (
+            <div className="hp-card text-sm text-zinc-700">
+              <p className="font-semibold text-hp-sage-deep">
+                Kitchen brain
+                {run.kitchenBrain.revised ? " · second model rewrote the pot" : ""}
+                {run.kitchenBrain.heat ? ` · ${run.kitchenBrain.heat}` : ""}
+              </p>
+              {run.kitchenBrain.criticModel && (
+                <p className="mt-1 text-xs text-zinc-500">
+                  Critic: {run.kitchenBrain.criticModel}
+                </p>
+              )}
+              {run.kitchenBrain.mealIdeas.length > 0 && (
+                <p className="mt-2 text-xs">
+                  TheMealDB: {run.kitchenBrain.mealIdeas.join(" · ")}
+                </p>
+              )}
+              {run.kitchenBrain.foodFacts.length > 0 && (
+                <ul className="mt-2 space-y-1 text-xs">
+                  {run.kitchenBrain.foodFacts.map((fact) => (
+                    <li key={fact.item}>
+                      Open Food Facts · {fact.item}
+                      {fact.product ? ` (${fact.product})` : ""}
+                      {fact.proteinPer100g !== undefined ? ` · ${fact.proteinPer100g}g protein/100g` : ""}
+                      {fact.allergens.length ? ` · ${fact.allergens.slice(0, 3).join(", ")}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {run.kitchenBrain.criticNotes.map((note) => (
+                <p key={note} className="mt-1 text-xs">{note}</p>
+              ))}
+            </div>
+          )}
           {run?.proposal && run.preferenceScore !== undefined && (
             <div className="rounded-2xl border-2 border-hp-ink bg-hp-gold/35 px-4 py-3 text-sm text-hp-ink shadow-[3px_3px_0_0_var(--hp-ink)]">
               <p className="hp-display text-xl tabular-nums">

@@ -12,6 +12,7 @@ type IntegrationStatus = {
   sentry: { configured: boolean };
   temporal: { configured: boolean; reachable: boolean };
   embeddings: { live: boolean };
+  freeFood: { meals: boolean; facts: boolean };
   backboard: { configured: boolean; reachable: boolean };
   tabpfn: { live: boolean; note: string };
   tiger: { configured: boolean; reachable: boolean };
@@ -142,8 +143,26 @@ function rowsFromStatus(s: IntegrationStatus): Row[] {
       name: "Embeddings",
       track: "Ollama",
       ok: s.embeddings.live,
-      detail: s.embeddings.live ? "Pantry memory vectors" : "Keyword memory only",
-      hint: "ollama pull nomic-embed-text",
+      detail: s.embeddings.live
+        ? "Pantry memory vectors (Ollama or Google text-embedding-004)"
+        : "Keyword memory only",
+      hint: "ollama pull nomic-embed-text · or AI Studio GEMMA_API_KEY",
+    },
+    {
+      name: "TheMealDB",
+      track: "Free, no key",
+      ok: s.freeFood.meals,
+      detail: s.freeFood.meals
+        ? "Public dish names ground the planner"
+        : "Meal name lookup unreachable",
+    },
+    {
+      name: "Open Food Facts",
+      track: "Free, no key",
+      ok: s.freeFood.facts,
+      detail: s.freeFood.facts
+        ? "Hidden allergen tags + protein per 100g"
+        : "Nutrition lookup unreachable",
     },
     {
       name: "Render deploy",

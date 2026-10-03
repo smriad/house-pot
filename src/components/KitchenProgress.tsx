@@ -1,9 +1,12 @@
 const STEPS = [
   "Mastra approval gate",
   "Backboard & pantry memory",
+  "TheMealDB dish names",
   "Gemma recipe draft",
+  "Open Food Facts allergens",
+  "Second Gemma review",
   "TabPFN friend-fit score",
-  "Shopping hints",
+  "Cook brief (LLM)",
 ];
 
 export default function KitchenProgress({ active }: { active: boolean }) {

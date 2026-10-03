@@ -17,6 +17,8 @@ export async function GET() {
       sentry: status.sentry.configured,
       temporal: status.temporal.reachable,
       embeddings: status.embeddings.live,
+      themealdb: status.freeFood.meals,
+      openfoodfacts: status.freeFood.facts,
       backboard: status.backboard.reachable,
       storage: status.storage,
     },

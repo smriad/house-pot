@@ -15,6 +15,7 @@ import { probeWhisper } from "@/lib/whisper/probe";
 import { probeElevenLabs } from "@/lib/elevenlabs-probe";
 import { probeSerpApi } from "@/lib/serp-probe";
 import { probeTabpfn } from "@/lib/tabpfn/predict";
+import { probeFreeFood } from "@/lib/kitchen/free-food";
 import { probeTiger } from "@/lib/tiger/memory";
 import {
   getPartnerDeployStatus,
@@ -31,6 +32,7 @@ export type IntegrationStatus = {
   sentry: { configured: boolean };
   temporal: { configured: boolean; reachable: boolean };
   embeddings: { live: boolean };
+  freeFood: { meals: boolean; facts: boolean };
   backboard: { configured: boolean; reachable: boolean };
   tabpfn: { live: boolean; note: string };
   tiger: { configured: boolean; reachable: boolean };
@@ -54,6 +56,7 @@ export async function getIntegrationStatus(): Promise<IntegrationStatus> {
     elevenLive,
     serpLive,
     tabpfnLive,
+    freeFood,
     tigerReachable,
     mastraStorage,
     deploy,
@@ -67,6 +70,7 @@ export async function getIntegrationStatus(): Promise<IntegrationStatus> {
     probeElevenLabs(),
     probeSerpApi(),
     probeTabpfn(),
+    probeFreeFood(),
     probeTiger(),
     probeMastraStorage(),
     getPartnerDeployStatus(),
@@ -102,6 +106,7 @@ export async function getIntegrationStatus(): Promise<IntegrationStatus> {
       reachable: temporalReachable,
     },
     embeddings: { live: embeddingsLive },
+    freeFood,
     backboard: {
       configured: hasBackboard(),
       reachable: backboardReachable,

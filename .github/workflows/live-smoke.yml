@@ -1,0 +1,16 @@
+name: Live smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * *"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe production health
+        env:
+          PRODUCTION_URL: https://house-pot.onrender.com
+        run: bash scripts/smoke-production.sh

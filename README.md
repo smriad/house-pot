@@ -8,7 +8,9 @@ Phone-friendly web app for the household cook: pantry in → **open-weight Gemma
 
 | Sponsor / OSS | Status in app |
 | --- | --- |
-| **Gemma** | Meal planning via OpenAI-compatible API (`GEMMA_*`); auto-probes Ollama at `127.0.0.1:11434` |
+| **Gemma** | Two passes: draft, then a critic that can rewrite (`GEMMA_*`) |
+| **TheMealDB** | Free public dish names, no key, fed into the planner |
+| **Open Food Facts** | Free allergen tags and protein per 100g, no key |
 | **Whisper** | Optional server transcription (`POST /api/transcribe`, `scripts/transcribe.py`) |
 | **MongoDB Atlas** | Household + pantry + friend feedback memory |
 | **Mastra** | Suspend/approve workflow (`@mastra/libsql` + `kitchen-workflow`) |
@@ -18,6 +20,24 @@ Phone-friendly web app for the household cook: pantry in → **open-weight Gemma
 | **Render** | `render.yaml` + `Dockerfile` (standalone Next output) |
 
 Durable narration uses **idempotent steps** (`lib/durable/steps.ts`) so retries do not double-charge ElevenLabs.
+
+### Intelligence stack (free / open)
+
+| Layer | Service | Cost |
+| --- | --- | --- |
+| **Planner + critic + cook brief** | Gemma / Gemini via `GEMMA_*` OpenAI-compatible API | AI Studio free tier |
+| **Meal grounding** | [TheMealDB](https://www.themealdb.com/) | No key |
+| **Allergen + macros** | [Open Food Facts](https://world.openfoodfacts.org/) | No key |
+| **Friend-fit score** | Heuristic + optional [TabPFN](https://github.com/PriorLabs/TabPFN) (local Python) | OSS |
+| **Pantry memory** | MongoDB + optional vectors (`text-embedding-004` on AI Studio or Ollama `nomic-embed-text`) | Atlas M0 |
+| **Substitutes / ideas** | SerpApi (optional) | Hacktoberfest promos |
+| **Voice** | ElevenLabs TTS + Scribe | Sponsor key |
+
+### CI/CD (GitHub Actions, free)
+
+- **`house-pot.yml`** — `npm test` → `build` → `lint` on every push/PR.
+- **`live-smoke.yml`** — daily + manual curl of `/api/health` on production (`npm run smoke:prod`).
+- **Render auto-deploy** — in Render: Settings → Deploy Hook → add URL as repo secret `RENDER_DEPLOY_HOOK` to redeploy on green `main` builds.
 
 ## Quick start
 

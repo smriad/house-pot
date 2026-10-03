@@ -9,7 +9,7 @@ import {
 import { proposeRecipe } from "@/lib/gemma";
 import { findMealInspiration, findSubstitutes } from "@/lib/serp";
 import { narrateRecipe } from "@/lib/elevenlabs";
-import type { KitchenRun, RunTraceEvent } from "@/lib/types";
+import type { FoodFact, KitchenRun, RunTraceEvent } from "@/lib/types";
 import { withAgentSpan } from "@/lib/observability/agent-trace";
 import {
   resumeApprovalGate,
@@ -21,9 +21,24 @@ import { executeNarrationWorkflow, probeTemporal } from "@/lib/temporal/client";
 import { addBackboardMemory, searchBackboardMemories } from "@/lib/backboard";
 import { buildShoppingNotes } from "@/lib/kitchen/shopping";
 import { scoreRecipeFit } from "@/lib/kitchen/preference-score";
-import { reviewProposal } from "@/lib/kitchen/pantry-check";
+import { reviewProposal, type PantryReview } from "@/lib/kitchen/pantry-check";
+import {
+  fetchMealIdeas,
+  hiddenAllergenHits,
+  lookupFoodFacts,
+  nutritionLine,
+} from "@/lib/kitchen/free-food";
+import { critiqueRecipe } from "@/lib/kitchen/critic";
+import { buildCookBrief } from "@/lib/kitchen/cook-brief";
 import { predictMealFit } from "@/lib/tabpfn/predict";
 import { mirrorMemoryToTiger } from "@/lib/tiger/memory";
+
+function applyFoodFacts(review: PantryReview, facts: FoodFact[], allergies: string[]): PantryReview {
+  const hidden = hiddenAllergenHits(facts, allergies);
+  if (!hidden.length) return review;
+  const allergyHits = [...new Set([...review.allergyHits, ...hidden.map((hit) => hit.allergy)])];
+  return { ...review, allergyHits, safeToNarrate: false };
+}
 
 function trace(step: string, detail: string, ms?: number): RunTraceEvent {
   return { at: new Date().toISOString(), step, detail, ms };
@@ -121,7 +136,9 @@ export async function startKitchenRun(input: {
   );
   run.serpInspiration = serpIdeas;
 
-  const recipe = await runStep(run, "gemma-propose", () =>
+  const mealIdeas = await runStep(run, "themealdb", () => fetchMealIdeas(input.pantryText));
+
+  let recipe = await runStep(run, "gemma-propose", () =>
     proposeRecipe({
       cookName: household.cookName,
       allergies: household.allergies,
@@ -133,11 +150,53 @@ export async function startKitchenRun(input: {
       memorySnippets,
       substituteHints,
       serpInspiration: serpIdeas,
+      publicRecipeIdeas: mealIdeas,
     }),
   );
 
+  let foodFacts = await runStep(run, "openfoodfacts", () =>
+    lookupFoodFacts(recipe.ingredients.map((ingredient) => ingredient.item)),
+  );
+  let review = applyFoodFacts(
+    reviewProposal(recipe, input.pantryText, household.allergies),
+    foodFacts,
+    household.allergies,
+  );
+
+  const critique = await runStep(run, "gemma-critic", () =>
+    critiqueRecipe({
+      cookName: household.cookName,
+      allergies: household.allergies,
+      dislikes: household.dislikes,
+      pantryText: input.pantryText,
+      recipe,
+      review,
+      foodFacts,
+    }),
+  );
+  if (critique.revised && critique.recipe) {
+    recipe = critique.recipe;
+    foodFacts = await lookupFoodFacts(recipe.ingredients.map((ingredient) => ingredient.item));
+    review = applyFoodFacts(
+      reviewProposal(recipe, input.pantryText, household.allergies),
+      foodFacts,
+      household.allergies,
+    );
+  }
+
+  const criticNotes = [...critique.notes];
+  const macros = nutritionLine(foodFacts);
+  if (macros) criticNotes.push(macros);
+
   run.proposal = recipe;
-  const review = reviewProposal(recipe, input.pantryText, household.allergies);
+  run.kitchenBrain = {
+    mealIdeas,
+    foodFacts,
+    criticNotes,
+    criticModel: critique.model,
+    heat: critique.heat,
+    revised: critique.revised,
+  };
   run.pantryReview = review;
   if (review.allergyHits.length > 0) {
     recipe.allergyWarnings = [
@@ -167,6 +226,17 @@ export async function startKitchenRun(input: {
   run.preferenceScore = Math.round((fit.score + tabpfn.score) / 2);
   run.predictionSource = tabpfn.source;
   run.fitReasons = [...fit.reasons, tabpfn.reason];
+
+  const brief = await runStep(run, "gemma-brief", () =>
+    buildCookBrief({
+      cookName: household.cookName,
+      recipe,
+      preferenceScore: run.preferenceScore,
+      revised: critique.revised,
+    }),
+  );
+  if (brief) run.cookBrief = brief;
+
   run.updatedAt = new Date().toISOString();
   run.trace.push(trace("propose", `recipe: ${recipe.title}`));
   await saveRun(run);
