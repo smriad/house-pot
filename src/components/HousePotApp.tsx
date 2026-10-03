@@ -112,9 +112,9 @@ export default function HousePotApp() {
   const [household, setHousehold] = useState<Household | null>(null);
   const [cookName, setCookName] = useState("Amma");
   const [allergies, setAllergies] = useState("peanuts, shellfish");
-  const [dislikes, setDislikes] = useState("very spicy");
+  const [dislikes, setDislikes] = useState("too much jhaal");
   const [pantry, setPantry] = useState(
-    "red lentils, onion, garlic, rice, cumin, spinach, yogurt",
+    "masoor dal, piyaz, roshun, chaal, jeera, palong shaak, doi",
   );
   const [diners, setDiners] = useState(3);
   const [voiceTranscript, setVoiceTranscript] = useState("");
@@ -419,7 +419,7 @@ export default function HousePotApp() {
     <div className="hp-page">
       <SiteHeader
         title="Build for a Friend"
-        subtitle={`Open-weight Gemma plans the meal from what is in the kitchen. MongoDB remembers the pantry. ElevenLabs reads the recipe aloud only after ${cookName || "your cook"} taps approve.`}
+        subtitle={`From the bazar to the pot: Gemma plans dinner from what is in the kitchen. MongoDB remembers allergies and pantry. ElevenLabs reads the recipe aloud only after ${cookName || "your cook"} taps approve.`}
       >
         <Link href="/history" className="hp-btn-gold">
           Pot history

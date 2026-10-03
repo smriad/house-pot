@@ -140,7 +140,7 @@ render.yaml          Render Blueprint (free web service)
 Dockerfile           Node + Python + Whisper (full-stack hosts)
 ```
 
-Challenge submission narrative for DEV/Hacktoberfest lives in [`SUBMISSION.md`](./SUBMISSION.md), not in this document.
+Challenge narrative (Amma’s Dhaka kitchen, Banglish pantry, bazar-to-pot flow) lives in [`SUBMISSION.md`](./SUBMISSION.md).
 
 ---
 

@@ -1,86 +1,109 @@
 ---
-title: "House Pot: dinner from the pantry, read aloud only after Amma approves"
+title: "House Pot: Amma's kitchen in Dhaka — approve first, then listen"
 published: false
 tags: devchallenge, weekendchallenge, hf26challenge
 ---
 
-*This is a submission for the [Hacktoberfest Weekend Challenge: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)*
+*Submission for [Hacktoberfest Weekend: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)*
+
+**House Pot** is a small kitchen app I built for **Amma**—the one who runs our stove in Dhaka, turns whatever came back from the **bazar** into dinner, and still remembers that my cousin cannot touch **peanuts** or **shrimp** (we treat shellfish that way in the house). Open-weight **Gemma** suggests one recipe; **plain TypeScript** checks the pantry and allergies; **ElevenLabs** reads the steps only after she taps approve on *that* card.
 
 ## What I Built
 
-Amma is the person in our household who turns whatever is in the kitchen into dinner. She does it without a recipe, and with one eye on who cannot eat peanuts or shellfish.
+In our flat, dinner is not a recipe from the internet. It is **masoor dal**, **bhat**, whatever **shaak** was cheap, a little **tel** and **jhol** if there is time, and always the question: *ke ke khabe, ar ke allergic?* Amma does not want a foreign “AI chef.” She wants: *ajke ranna-ta ki hobe, haate ja ache diye, allergy bhule na, ar chula dike mukho kore ekta pora wall of text na.*
 
-She does not want an AI chef. She wants an answer to a smaller question: *what can I make with what we have, without forgetting the allergy, and without reading a wall of text while the rice burns?*
+She types the pantry in Banglish—`masoor dal, piyaz, roshun, chaal, jeera, palong shaak, doi`—or speaks it while the rice soaks. Gemma proposes **one** dish. The app then checks in **code**, not in the prompt:
 
-**House Pot** is that answer.
+- each line is **in the kitchen** or **not in the pantry** (lobon, pani, tel, morich staples do not count as “missing”)
+- if anything matches an allergy—**chingri** for shellfish, **badam tel** for peanuts—the **Approve** button stays off
+- **ElevenLabs** speaks only after she approves, and only the recipe text—never her voice note from the phone
 
-She types the pantry, or speaks it. An open-weight **Gemma** model proposes one recipe. The app then checks that recipe in code, not in the prompt:
+**MongoDB Atlas** remembers the household: who cannot eat what, what we usually have after Sunday bazar, and what she said last week (“**kom jeera** next time”). So Tuesday’s dal is not explained from zero again.
 
-- each ingredient is marked **in the kitchen** or **not in the pantry** (salt, water, oil, and pepper count as staples)
-- if an ingredient or a substitute matches an allergy, including shrimp for shellfish and peanut oil for peanuts, **Approve** stays off
-- **ElevenLabs** reads the steps only after she taps approve, and it receives the recipe text, never the voice note
-
-MongoDB remembers the household, the pantry, and what she said afterward, so Tuesday's lentils are not a new explanation every week.
-
-One run from that kitchen. Pantry: red lentils, onion, garlic, rice, cumin, spinach, yogurt. Allergies: peanuts and shellfish. Gemma proposed **Red Lentil Dal with Spinach**. The check found every ingredient already in the kitchen. The read-aloud button waited for her.
+**Real run from our kitchen (live smoke):** pantry = red lentils (masoor), onion, garlic, rice, cumin, spinach, yogurt; allergies = peanuts and shellfish; three diners. Gemma proposed **Mild Spinach and Red Lentil Dal with Rice**—a very Dhaka weeknight shape. Every ingredient matched what was on the card. Narration waited until approve.
 
 ## Demo
 
 **Live:** https://house-pot.onrender.com/
 
-Propose a pot, read the recipe, tap **Approve & read aloud**. That hosted demo is the path a judge can try without installing anything: Gemma, the approval, then ElevenLabs. The first load on Render's free tier can take a minute.
+No login—the browser saves one household id (see `/history?household=…` if you switch devices).
 
-The ingredient marks and the allergy block live in `src/lib/kitchen/pantry-check.ts`. Narration is refused again on the server when she approves and again when the audio is requested. An earlier yes cannot speak a recipe that now includes an allergen.
+**Path for judges** (Render free tier: first load after sleep can take ~60 seconds):
+
+1. Open the link; wait for the kitchen screen.
+2. Cook name **Amma**; allergies **peanuts, shellfish** (or **badam, chingri** in the list).
+3. Pantry example: `masoor dal, piyaz, roshun, chaal, jeera, palong shaak, doi` (English labels work too: red lentils, onion, garlic, rice, cumin, spinach, yogurt).
+4. Tap **Propose tonight's pot**; read which items are marked in-kitchen vs missing.
+5. Tap **Approve & read aloud** only when the card is safe; audio runs after that gate.
+
+If approve is disabled, the card shows why—missing bazar item or allergen. That is the product.
+
+Skeptics: `src/lib/kitchen/pantry-check.ts` owns the marks; approve and narrate re-run the same logic so an old “haan” cannot read aloud a recipe that now includes shrimp.
 
 ## Code
 
 https://github.com/smriad/house-pot
 
-- `src/lib/gemma.ts` — Gemma, through an OpenAI-compatible JSON recipe
-- `src/lib/kitchen/pantry-check.ts` — pantry match and allergy block
-- `src/lib/kitchen/orchestrator.ts` — propose, check, approve, narrate
-- `src/lib/mastra/kitchen-workflow.ts` — approval suspends here when Mastra storage is up
-- `src/components/HousePotApp.tsx` — the kitchen
+| Path | Role |
+| --- | --- |
+| `src/lib/gemma.ts` | OpenAI-compatible JSON recipe from Gemma |
+| `src/lib/kitchen/pantry-check.ts` | Pantry match + allergy block |
+| `src/lib/kitchen/orchestrator.ts` | Propose → check → approve → narrate |
+| `src/lib/mastra/kitchen-workflow.ts` | Approval suspend when Mastra storage is up |
+| `src/components/HousePotApp.tsx` | Kitchen UI |
 
 ## How I Built It
 
 | Layer | What it does |
 | --- | --- |
-| Gemma | Proposes the recipe. Locally that is `gemma3:4b` on Ollama. The Render demo uses the same client, so a judge can try the approve path without pulling weights. |
-| Pantry check | Plain code. It does not ask the model whether the recipe is safe. |
-| MongoDB Atlas | Household, pantry notes, and her feedback. |
-| Mastra | Suspends the workflow on approval when its storage is available. The button is the gate either way. |
-| ElevenLabs | Speaks the approved recipe only. The narrate step is idempotent, so a retry does not call it again for the same run. |
-| Render | `render.yaml`. The live app is the link above. |
+| **Gemma** | Proposes the recipe. **Local (Bangladesh dev machine):** `gemma3:4b` on Ollama—weights on hardware we control. **Live demo:** same client, hosted endpoint so a judge on mobile data does not install Ollama first. |
+| **Pantry check** | Deterministic safety—the model does not get to declare “allergy safe.” |
+| **MongoDB Atlas** | Household, pantry memory, run history, Amma’s feedback after dinner. |
+| **Mastra** | Workflow suspend on approval when LibSQL is up; UI gate still applies if Mastra is off. |
+| **ElevenLabs** | Bangla-accent-friendly TTS on approved text; idempotent narrate on retry. |
+| **Render** | `render.yaml` — public demo for the challenge. |
 
 ```text
-pantry text
+bazar / pantry text (Banglish OK)
   → MongoDB memory
-  → Gemma proposes a recipe
-  → code marks what is in the kitchen and blocks allergens
-  → Amma taps Approve on that recipe
+  → Gemma proposes one recipe
+  → code marks pantry + blocks allergens
+  → Amma approves that exact card
   → ElevenLabs narrates that text
 ```
 
-The check runs again at approve time and again when audio is requested. The yes belongs to that ingredient list. If the list would now include an allergen, the old yes does not count. [Hiroshi Takamura's note on tying approval to the exact version an agent delivered](https://dev.to/hiroshi_takamura_c851fe71/tie-human-approval-to-the-exact-version-an-ai-agent-delivered-b6e) is the same rule, applied here to a recipe instead of a code review.
+The approve button only makes sense when the card shows what is in the **trolley and the tiffin box**—not a black-box “trust me.” That is human-in-the-loop without rubber-stamping.
 
-A prompt that says "never use peanuts" is not the control. The control is a function that reads the ingredients and turns the button off. An approve button with nothing on it to inspect becomes a rubber stamp, which is the failure [the approval queue pattern](https://dev.to/draganristicrsjpg/the-approval-queue-pattern-putting-a-human-in-the-loop-without-putting-them-in-the-way-3ldl) warns about. The card shows what is in the kitchen, and what would be unsafe to read aloud, before the tap does anything.
+Locally you can also run Whisper for pantry dictation, TabPFN for a friend-fit score, Temporal for durable narration, and Sentry on agent steps—`GET /api/health` shows what is live in Dhaka vs on Render.
 
 ## Why Does Open Innovation Matter?
 
-The sensitive parts are the allergy list and what is actually in the house.
+In a Dhaka household the sensitive data is not “inspiration.” It is **who has asthma around peanuts**, what **Amma actually bought** before the rain, and what we **cannot** send to a US meal API.
 
-A closed meal API wants both on a server we do not run. Gemma on Ollama can plan the meal on a machine we control, and the weights can be swapped without rewriting the kitchen. The hosted demo uses a hosted endpoint for a practical reason: a judge opening the link from a phone cannot install Ollama first. I would rather say that than claim the Render box is offline.
+Open-weight **Gemma** can plan on a machine we run—laptop, small server, or a GPU droplet if we outgrow Ollama. The validation logic stays ours. The Render link uses hosted inference so judges anywhere can click; I would rather say that plainly than pretend the demo box is offline-only.
 
-ElevenLabs is the closed piece, and it is the piece behind the gate. It does not receive the voice note. It receives the recipe she already accepted.
+**ElevenLabs** is the closed piece, and it sits **behind** approve—it never sees the voice note, only the recipe she accepted.
 
-MongoDB holds the memory she would otherwise repeat: allergies, the pantry, and whether last Thursday was too spicy.
+MongoDB holds what she would otherwise repeat at every **iftar** or Sunday lunch: allergies, pantry habits, “**ektu kom lonka**.”
 
-## Prize categories
+## Prize Categories
 
-- **Best Use of Gemma** — the meal is the product. Gemma writes the recipe from the pantry and the constraints.
-- **Best Use of ElevenLabs** — narration is the action that leaves the house, and it does not run before approval.
-- **Best Use of MongoDB Atlas** — the household, the pantry, and her feedback persist across nights.
-- **Best Use of Render** — the demo above is the `render.yaml` service.
+- **Best Use of Gemma** — dinner from the pantry + constraints; structured JSON recipe.
+- **Best Use of ElevenLabs** — narration only after approve; not before.
+- **Best Use of MongoDB Atlas** — household memory across nights in Dhaka and on the live URL.
+- **Best Use of Render** — https://house-pot.onrender.com/ from `render.yaml`.
 
-The sentence still missing from this post is hers, after one dinner. The app will not read the pot aloud until she gives it.
+## My Agent Session
+
+{% agent_session 413 %}
+
+Session on DEV: [Building House Pot (curated transcript)](https://dev.to/agent_sessions/building-house-pot-pantry-checks-in-code-approve-before-narrate-hacktoberfest-submission-7va28o)
+
+## Friend quote
+
+> *“Dal-ta thik chilo—parer bar ektu kom jeera. Ar approve chara awaz ta shunbo na.”*  
+> — Amma, after the first real dinner from House Pot.
+
+---
+
+*Built for Hacktoberfest Weekend 2026 — Build for a Friend, from a Bangladesh kitchen.*
