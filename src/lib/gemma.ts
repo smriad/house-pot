@@ -11,6 +11,18 @@ export function isGemmaConfigured(): boolean {
   return Boolean(process.env.GEMMA_BASE_URL?.trim());
 }
 
+/** Gemma 4 / Gemini may prefix reasoning in <thought> blocks before JSON. */
+export function extractRecipeJsonText(raw: string): string {
+  let text = raw.trim();
+  text = text.replace(/<thought>[\s\S]*?<\/thought>/gi, "").trim();
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced?.[1]) text = fenced[1].trim();
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start >= 0 && end > start) return text.slice(start, end + 1);
+  return text;
+}
+
 function client(): OpenAI {
   return new OpenAI({
     baseURL: resolveGemmaBaseUrl(),
@@ -59,8 +71,10 @@ export async function proposeRecipe(params: {
   const openai = client();
 
   const system = `You are House Pot, a kitchen agent for one household cook.
-Use only the pantry and constraints given. Never suggest ingredients that conflict with listed allergies.
-Respond with JSON only, matching the recipe schema fields: title, summary, servings, ingredients (item, amount, optional substitute), steps, allergyWarnings, openSourceRationale.
+Prefer ingredients named in the pantry. You may list something missing, but never include a listed allergen or a food made from one, including substitutes.
+Respond with a single JSON object only — no markdown fences, no <thought> tags, no prose before or after.
+Match schema fields: title, summary, servings, ingredients (item, amount, optional substitute), steps, allergyWarnings, openSourceRationale.
+allergyWarnings lists allergens you considered and then left out.
 openSourceRationale must explain why a local open-weight model is appropriate (privacy, offline, no vendor lock-in).`;
 
   const user = JSON.stringify(
@@ -97,7 +111,7 @@ openSourceRationale must explain why a local open-weight model is appropriate (p
       const raw = completion.choices[0]?.message?.content;
       if (!raw) throw new Error("Gemma returned an empty response");
 
-      const parsed = recipeSchema.parse(JSON.parse(raw));
+      const parsed = recipeSchema.parse(JSON.parse(extractRecipeJsonText(raw)));
       if (!parsed.openSourceRationale) {
         parsed.openSourceRationale =
           `Recipe planned with open-weight ${model} in ${Date.now() - started}ms; pantry constraints stayed on our inference endpoint.`;
@@ -119,21 +133,19 @@ function demoRecipe(params: {
   const safe = params.allergies.length
     ? ` Avoiding: ${params.allergies.join(", ")}.`
     : "";
+  const fromPantry = params.pantryText
+    .split(/[,.\n]/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 1)
+    .slice(0, 6);
   return {
     title: "Weeknight dal with whatever is in the pot",
     summary: `A forgiving lentil stew for ${params.cookName} and ${params.diners} diners, built from what's on hand.${safe}`,
     servings: params.diners,
-    ingredients: [
-      { item: "red lentils", amount: "1 cup" },
-      { item: "onion", amount: "1 medium" },
-      { item: "garlic", amount: "3 cloves" },
-      { item: "cumin", amount: "1 tsp" },
-      {
-        item: "pantry vegetables",
-        amount: "2 cups chopped",
-        substitute: params.pantryText.slice(0, 80),
-      },
-    ],
+    ingredients: (fromPantry.length ? fromPantry : ["lentils"]).map((item) => ({
+      item,
+      amount: "from the pantry",
+    })),
     steps: [
       "Rinse lentils until the water runs clear.",
       "Sauté onion and garlic with cumin until fragrant.",
