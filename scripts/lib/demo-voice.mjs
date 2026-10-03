@@ -68,8 +68,19 @@ export function demoVoiceId() {
 }
 
 export function demoAudioGain() {
-  const n = parseFloat(process.env.DEMO_AUDIO_GAIN ?? "3.2");
-  return Number.isFinite(n) && n > 0 ? n : 3.2;
+  const n = parseFloat(process.env.DEMO_AUDIO_GAIN ?? "1.6");
+  return Number.isFinite(n) && n > 0 ? n : 1.6;
+}
+
+/** Per-clip leveling so tour chapters and recipe narration match before mixing. */
+function segmentAudioFilter(inputRef, outputLabel) {
+  const g = demoAudioGain();
+  return `[${inputRef}]dynaudnorm=f=251:g=23:p=0.95,volume=${g},alimiter=limit=0.98:attack=2:release=50[${outputLabel}]`;
+}
+
+/** Final pass on the muxed track (evens quiet tour vs loud recipe half). */
+function masterAudioFilter(inputRef, outputLabel) {
+  return `[${inputRef}]dynaudnorm=f=901:g=21:p=0.95,alimiter=limit=0.98:attack=2:release=50[${outputLabel}]`;
 }
 
 function voiceSettings() {
@@ -139,11 +150,6 @@ export async function synthesizeTourVoices(outDir) {
   return files;
 }
 
-function gainFilter() {
-  const g = demoAudioGain();
-  return `volume=${g},alimiter=limit=0.98:attack=2:release=50`;
-}
-
 /**
  * @param {{ atSec: number, path: string }[]} timeline
  * @param {number} totalSec
@@ -154,10 +160,12 @@ export function buildTourAudioTrack(timeline, totalSec, outPath) {
   timeline.forEach((seg, i) => {
     inputs.push("-i", seg.path);
     const delayMs = Math.max(0, Math.round(seg.atSec * 1000));
-    filters.push(`[${i}:a]adelay=${delayMs}|${delayMs}[a${i}]`);
+    const pre = `pre${i}`;
+    filters.push(segmentAudioFilter(`${i}:a`, pre));
+    filters.push(`[${pre}]adelay=${delayMs}|${delayMs}[a${i}]`);
   });
   const mixInputs = timeline.map((_, i) => `[a${i}]`).join("");
-  const filter = `${filters.join(";")};${mixInputs}amix=inputs=${timeline.length}:duration=longest:dropout_transition=0[outa]`;
+  const filter = `${filters.join(";")};${mixInputs}amix=inputs=${timeline.length}:duration=longest:dropout_transition=0:normalize=0[outa];${masterAudioFilter("outa", "final")}`;
 
   execFileSync(
     "ffmpeg",
@@ -167,7 +175,7 @@ export function buildTourAudioTrack(timeline, totalSec, outPath) {
       "-filter_complex",
       filter,
       "-map",
-      "[outa]",
+      "[final]",
       "-t",
       String(Math.ceil(totalSec + 1)),
       "-c:a",
@@ -184,9 +192,8 @@ export function mergeVideoAndAudio(videoPath, audioPath, destPath) {
   const videoSec = mediaDurationSec(videoPath);
   const audioSec = mediaDurationSec(audioPath);
   const padSec = Math.max(0, audioSec - videoSec + 0.25);
-  const gain = gainFilter();
 
-  const audioMap = `[1:a]${gain}[aout]`;
+  const audioMap = masterAudioFilter("1:a", "aout");
 
   if (padSec > 0.15) {
     execFileSync(

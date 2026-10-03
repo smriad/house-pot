@@ -13,7 +13,8 @@
     "temporal:up": "docker compose -f docker-compose.temporal.yml up -d",
     "stack:up": "bash scripts/live-stack.sh",
     "stack:down": "docker compose -f docker-compose.local.yml down",
-    "demo:record": "node scripts/record-demo.mjs"
+    "demo:record": "node scripts/record-demo.mjs",
+    "demo:remix": "node scripts/remix-demo.mjs"
   },
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.70.0",

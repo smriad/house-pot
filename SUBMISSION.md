@@ -209,11 +209,11 @@ MongoDB holds what she would otherwise repeat at every family lunch: allergies, 
 
 ## My Agent Session
 
-Curated build log: submission write-up, `pantry-check` policy layer, DEV draft, demo video, and trimming the tech list to what `GET /api/health` reports as **live** locally (no SerpApi).
+Curated build log: Playwright `demo.mp4` pipeline, per-chapter tech voiceover (technology / where / how), Bangladesh-style narrator, and syncing this submission draft to DEV.
 
-{% agent_session 421 %}
+{% agent_session 422 %}
 
-Session on DEV: [House Pot — submission and honest stack](https://dev.to/agent_sessions/house-pot-submission-pantry-check-policy-and-honest-local-stack-7mdyom)
+Session on DEV: [House Pot — demo video, tech voiceover, and submission sync](https://dev.to/agent_sessions/house-pot-demo-video-tech-voiceover-and-dev-submission-sync-xuczlj)
 
 ## Friend quote
 
