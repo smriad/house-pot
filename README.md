@@ -140,7 +140,7 @@ render.yaml          Render Blueprint (free web service)
 Dockerfile           Node + Python + Whisper (full-stack hosts)
 ```
 
-Challenge narrative (Amma’s Dhaka kitchen, Banglish pantry, bazar-to-pot flow) lives in [`SUBMISSION.md`](./SUBMISSION.md).
+Challenge narrative (Amma’s Dhaka kitchen, market-to-pot flow, English pantry labels) lives in [`SUBMISSION.md`](./SUBMISSION.md).
 
 ---
 
