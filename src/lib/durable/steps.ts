@@ -1,4 +1,3 @@
-import type { KitchenRun } from "@/lib/types";
 import { getRun, saveRun } from "@/lib/db/store";
 
 /** At-least-once safe steps: skip if this run already completed the step. */

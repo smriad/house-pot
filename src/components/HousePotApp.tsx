@@ -161,12 +161,9 @@ export default function HousePotApp() {
 
   useEffect(() => {
     const id = localStorage.getItem(STORAGE_KEY);
-    if (!id) {
-      setHydrating(false);
-      return;
-    }
     void (async () => {
       try {
+        if (!id) return;
         const hRes = await fetch(`/api/household?id=${encodeURIComponent(id)}`);
         if (hRes.ok) {
           const h = (await hRes.json()) as Household;

@@ -5,7 +5,8 @@ import type { KitchenRun } from "@/lib/types";
 type Params = { params: Promise<{ id: string }> };
 
 function summarizeRun(run: KitchenRun) {
-  const { audioBase64: _audio, ...rest } = run;
+  const { audioBase64: _, ...rest } = run;
+  void _;
   return rest;
 }
 

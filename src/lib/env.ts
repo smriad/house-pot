@@ -26,7 +26,7 @@ export function hasTemporal(): boolean {
   return Boolean(process.env.TEMPORAL_ADDRESS?.trim());
 }
 
-export function useTemporalNarration(): boolean {
+export function temporalNarrationEnabled(): boolean {
   if (process.env.TEMPORAL_NARRATE?.trim() === "false") return false;
   return hasTemporal();
 }

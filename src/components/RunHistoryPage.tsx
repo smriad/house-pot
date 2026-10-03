@@ -36,8 +36,6 @@ export default function RunHistoryPage() {
   const [filter, setFilter] = useState<RunStatus | "all">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasHouseholdId, setHasHouseholdId] = useState(false);
-
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -65,8 +63,8 @@ export default function RunHistoryPage() {
   }, []);
 
   useEffect(() => {
-    setHasHouseholdId(!!localStorage.getItem(STORAGE_KEY));
-    void load();
+    const id = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(id);
   }, [load]);
 
   const filtered = useMemo(() => {
@@ -101,7 +99,7 @@ export default function RunHistoryPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-10">
-        {!hasHouseholdId && !loading && (
+        {!loading && !household && runs.length === 0 && (
           <p className="rounded-2xl border border-dashed border-[#3D5F58]/40 bg-white/70 p-8 text-center text-sm text-zinc-600">
             No household saved yet.{" "}
             <Link href="/" className="font-medium text-[#3D5F58] underline">

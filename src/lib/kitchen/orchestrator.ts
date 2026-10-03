@@ -16,7 +16,7 @@ import {
   startApprovalGate,
 } from "@/lib/mastra/approval-gate";
 import { runIdempotentStep } from "@/lib/durable/steps";
-import { useTemporalNarration } from "@/lib/env";
+import { temporalNarrationEnabled } from "@/lib/env";
 import { executeNarrationWorkflow, probeTemporal } from "@/lib/temporal/client";
 import { addBackboardMemory, searchBackboardMemories } from "@/lib/backboard";
 import { buildShoppingNotes } from "@/lib/kitchen/shopping";
@@ -216,7 +216,7 @@ export async function narrateKitchenRun(
 
   if (
     !options?.skipTemporal &&
-    useTemporalNarration() &&
+    temporalNarrationEnabled() &&
     (await probeTemporal())
   ) {
     try {

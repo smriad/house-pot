@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 type IntegrationStatus = {
   gemma: { configured: boolean; live: boolean };
@@ -191,10 +191,6 @@ export default function IntegrationsPanel() {
       setLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    if (open && !status) void refresh();
-  }, [open, status, refresh]);
 
   const rows = status ? rowsFromStatus(status) : [];
   const liveCount = rows.filter((r) => r.ok).length;
