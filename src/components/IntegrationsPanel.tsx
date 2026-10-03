@@ -196,13 +196,13 @@ export default function IntegrationsPanel() {
   const liveCount = rows.filter((r) => r.ok).length;
 
   return (
-    <section className="border-t border-[#3D5F58]/20 bg-[#2E4742] px-6 py-6 text-[#F2F2EB]">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
+    <section className="border-t border-hp-sage/25 bg-hp-sage-deep px-4 py-6 text-hp-cream sm:px-6">
+      <div className="hp-container flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-mono text-sm uppercase tracking-widest text-[#8BB2DE]">
+          <h2 className="font-mono text-sm uppercase tracking-widest text-hp-sky">
             Sponsor integrations
           </h2>
-          <p className="mt-1 text-xs text-[#F2F2EB]/80">
+          <p className="mt-1 text-xs text-hp-cream/80">
             Local probes only — nothing is submitted from this panel.
           </p>
         </div>
@@ -212,7 +212,7 @@ export default function IntegrationsPanel() {
             setOpen((v) => !v);
             if (!open) void refresh();
           }}
-          className="rounded-full border border-[#F5B726] px-4 py-2 font-mono text-xs text-[#F5B726]"
+          className="min-h-11 rounded-full border border-hp-gold px-4 py-2 font-mono text-xs text-hp-gold touch-manipulation hover:bg-hp-gold/10"
         >
           {open ? "Hide" : "Show"} dashboard
           {status ? ` · ${liveCount}/${rows.length} live` : ""}
@@ -220,9 +220,9 @@ export default function IntegrationsPanel() {
       </div>
 
       {open && (
-        <div className="mx-auto mt-6 grid max-w-5xl gap-3 sm:grid-cols-2">
+        <div className="hp-container mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {loading && !status && (
-            <p className="text-sm text-[#F2F2EB]/70">Probing services…</p>
+            <p className="text-sm text-hp-cream/70">Probing services…</p>
           )}
           {rows.map((row) => (
             <div

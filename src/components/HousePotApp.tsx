@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Household, KitchenRun, PantryMemory, Recipe } from "@/lib/types";
 import IntegrationsPanel from "@/components/IntegrationsPanel";
 import KitchenProgress from "@/components/KitchenProgress";
+import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { cookApprovedRun, runStatusLabel } from "@/lib/kitchen/run-display";
 
 const STORAGE_KEY = "house-pot-household-id";
@@ -40,34 +41,53 @@ function getSpeechRecognition(): SpeechRecognitionCtor | null {
 
 function RecipeCard({ recipe }: { recipe: Recipe }) {
   return (
-    <article className="rounded-2xl border border-[#3D5F58]/30 bg-white p-5 shadow-sm">
-      <h3 className="text-xl font-semibold text-[#2E4742]">{recipe.title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-zinc-700">{recipe.summary}</p>
+    <article className="hp-card ring-1 ring-hp-sage/10">
+      <h3 className="text-xl font-semibold tracking-tight text-hp-sage-deep sm:text-2xl">
+        {recipe.title}
+      </h3>
+      <p className="mt-2 text-pretty text-sm leading-relaxed text-zinc-700 sm:text-base">
+        {recipe.summary}
+      </p>
       {recipe.allergyWarnings.length > 0 && (
-        <p className="mt-3 rounded-lg bg-[#E97B77]/15 px-3 py-2 text-sm text-[#671912]">
+        <p
+          className="mt-4 rounded-xl border border-hp-blush/30 bg-hp-blush/15 px-3 py-2.5 text-sm text-[#671912]"
+          role="alert"
+        >
           Allergy watch: {recipe.allergyWarnings.join(", ")}
         </p>
       )}
-      <h4 className="mt-4 text-sm font-semibold uppercase tracking-wide text-[#3D5F58]">
+      <h4 className="mt-5 text-xs font-semibold uppercase tracking-wider text-hp-sage">
         Ingredients
       </h4>
-      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-800">
+      <ul className="mt-2 space-y-1.5 text-sm text-zinc-800">
         {recipe.ingredients.map((ing) => (
-          <li key={`${ing.item}-${ing.amount}`}>
-            {ing.amount} {ing.item}
-            {ing.substitute ? ` (or ${ing.substitute})` : ""}
+          <li key={`${ing.item}-${ing.amount}`} className="flex gap-2 border-b border-zinc-100 py-1.5 last:border-0">
+            <span className="shrink-0 font-mono text-xs text-hp-sage">{ing.amount}</span>
+            <span>
+              {ing.item}
+              {ing.substitute ? (
+                <span className="text-zinc-500"> (or {ing.substitute})</span>
+              ) : null}
+            </span>
           </li>
         ))}
       </ul>
-      <h4 className="mt-4 text-sm font-semibold uppercase tracking-wide text-[#3D5F58]">
+      <h4 className="mt-5 text-xs font-semibold uppercase tracking-wider text-hp-sage">
         Steps
       </h4>
-      <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-zinc-800">
-        {recipe.steps.map((step) => (
-          <li key={step}>{step}</li>
+      <ol className="mt-2 space-y-3 text-sm leading-relaxed text-zinc-800">
+        {recipe.steps.map((step, i) => (
+          <li key={step} className="flex gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-hp-sage/10 font-mono text-xs font-semibold text-hp-sage-deep">
+              {i + 1}
+            </span>
+            <span className="pt-0.5">{step}</span>
+          </li>
         ))}
       </ol>
-      <p className="mt-4 text-xs text-zinc-500">{recipe.openSourceRationale}</p>
+      <p className="mt-5 border-t border-zinc-100 pt-4 text-xs leading-relaxed text-zinc-500">
+        {recipe.openSourceRationale}
+      </p>
     </article>
   );
 }
@@ -366,92 +386,91 @@ export default function HousePotApp() {
     (run.status === "approved" || (run.status === "failed" && cookApprovedRun(run)));
 
   return (
-    <div className="min-h-full bg-[#F2F2EB] text-[#231F20]">
-      <header className="border-b border-[#3D5F58]/20 bg-[#3D5F58] px-6 py-8 text-[#F2F2EB]">
-        <p className="text-xs uppercase tracking-[0.2em] text-[#8BB2DE]">House Pot</p>
-        <h1 className="mt-2 font-mono text-3xl font-semibold">Build for a Friend</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#F2F2EB]/90">
-          Open-weight Gemma plans the meal from what is in the kitchen. MongoDB remembers the pantry.
-          ElevenLabs reads the recipe aloud only after {cookName || "your cook"} taps approve.
-        </p>
-        <Link
-          href="/history"
-          className="mt-4 inline-block rounded-full border border-[#F2F2EB]/35 px-4 py-1.5 text-sm font-medium text-[#F2F2EB] hover:bg-[#F2F2EB]/10"
-        >
-          View pot history →
+    <div className="hp-page">
+      <SiteHeader
+        title="Build for a Friend"
+        subtitle={`Open-weight Gemma plans the meal from what is in the kitchen. MongoDB remembers the pantry. ElevenLabs reads the recipe aloud only after ${cookName || "your cook"} taps approve.`}
+      >
+        <Link href="/history" className="hp-btn-gold">
+          Pot history
         </Link>
-        {health && (
-          <p className="mt-4 font-mono text-xs text-[#F5B726]">
-            gemma:{String(health.gemma)} · {String(health.storage ?? "local")} · elevenlabs:
-            {health.elevenlabs ? "tts" : "off"}
-            {health.elevenlabsStt ? "+scribe" : ""} · temporal:
-            {health.temporal ? "on" : "off"} · embed:
-            {health.embeddings ? "on" : "off"} · serp:{health.serpapi ? "on" : "off"}
-          </p>
-        )}
-      </header>
+      </SiteHeader>
 
-      <main className="mx-auto grid max-w-5xl gap-8 px-6 py-10 lg:grid-cols-2">
-        <section className="space-y-4">
-          <h2 className="font-mono text-lg text-[#2E4742]">Who are you cooking for?</h2>
-          <label className="block text-sm">
+      {health && (
+        <p className="hp-container -mt-1 pb-2 font-mono text-[10px] leading-relaxed text-hp-sage sm:text-xs">
+          gemma:{String(health.gemma)} · {String(health.storage ?? "local")} · elevenlabs:
+          {health.elevenlabs ? "tts" : "off"}
+          {health.elevenlabsStt ? "+scribe" : ""} · temporal:
+          {health.temporal ? "on" : "off"} · embed:
+          {health.embeddings ? "on" : "off"} · serp:{health.serpapi ? "on" : "off"}
+        </p>
+      )}
+
+      <main className="hp-container grid flex-1 gap-8 py-8 sm:py-10 lg:grid-cols-2 lg:gap-10">
+        <section className="space-y-4 sm:space-y-5" aria-labelledby="cook-profile-heading">
+          <h2 id="cook-profile-heading" className="hp-section-title">
+            Who are you cooking for?
+          </h2>
+          <label className="hp-label">
             Cook&apos;s name
             <input
-              className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2"
+              className="hp-input"
+              autoComplete="name"
               value={cookName}
               onChange={(e) => setCookName(e.target.value)}
             />
           </label>
-          <label className="block text-sm">
+          <label className="hp-label">
             Allergies (comma-separated)
             <input
-              className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2"
+              className="hp-input"
               value={allergies}
               onChange={(e) => setAllergies(e.target.value)}
             />
           </label>
-          <label className="block text-sm">
+          <label className="hp-label">
             Dislikes (comma-separated)
             <input
-              className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2"
+              className="hp-input"
               value={dislikes}
               onChange={(e) => setDislikes(e.target.value)}
               placeholder="very spicy, cilantro…"
             />
           </label>
-          <label className="block text-sm">
+          <label className="hp-label">
             Diners
             <input
               type="number"
               min={1}
               max={12}
-              className="mt-1 w-24 rounded-xl border border-zinc-300 bg-white px-3 py-2"
+              inputMode="numeric"
+              className="hp-input w-28"
               value={diners}
               onChange={(e) => setDiners(Number(e.target.value))}
             />
           </label>
-          <label className="block text-sm">
+          <label className="hp-label">
             Pantry & voice notes
             <textarea
               rows={6}
-              className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 font-mono text-sm"
+              className="hp-textarea"
               value={pantry}
               onChange={(e) => setPantry(e.target.value)}
             />
           </label>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button
               type="button"
               onClick={recording ? stopWhisperRecording : startWhisperRecording}
-              className="rounded-full bg-[#2E4742] px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
+              className="hp-btn-sage hp-btn-block sm:w-auto sm:flex-1"
             >
-              {recording ? "Stop recording" : "Record pantry (Whisper / Scribe)"}
+              {recording ? "Stop recording" : "Record pantry"}
             </button>
             <button
               type="button"
               onClick={startListening}
               disabled={listening}
-              className="rounded-full border border-[#2E4742] px-5 py-2 text-sm font-medium text-[#2E4742] disabled:opacity-60"
+              className="hp-btn-outline hp-btn-block sm:w-auto"
             >
               {listening ? "Listening…" : "Browser speech"}
             </button>
@@ -459,7 +478,7 @@ export default function HousePotApp() {
               type="button"
               onClick={proposeMeal}
               disabled={loading}
-              className="rounded-full bg-[#E53927] px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
+              className="hp-btn-primary hp-btn-block sm:w-auto sm:min-w-[12rem]"
             >
               {loading ? "Thinking…" : "Propose tonight's pot"}
             </button>
@@ -469,19 +488,26 @@ export default function HousePotApp() {
               Voice transcript{lastTranscribeEngine ? ` (${lastTranscribeEngine})` : ""}: {voiceTranscript}
             </p>
           )}
-          {error && <p className="rounded-lg bg-[#E97B77]/20 px-3 py-2 text-sm text-[#671912]">{error}</p>}
+          {error && (
+            <p className="rounded-xl border border-hp-blush/40 bg-hp-blush/15 px-3 py-2.5 text-sm text-[#671912]" role="alert">
+              {error}
+            </p>
+          )}
           <KitchenProgress active={loading && !run?.proposal} />
         </section>
 
-        <section className="space-y-4">
+        <section className="space-y-4 sm:space-y-5" aria-labelledby="proposal-heading">
+          <h2 id="proposal-heading" className="hp-section-title lg:sr-only">
+            Tonight&apos;s proposal
+          </h2>
           {hydrating && (
             <p className="text-center text-sm text-zinc-500">Loading saved household…</p>
           )}
           {runHistory.length > 0 && (
-            <label className="block text-sm text-[#2E4742]">
+            <label className="hp-label">
               Recent pots
               <select
-                className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm"
+                className="hp-input"
                 value={run?.id ?? ""}
                 onChange={(e) => {
                   const id = e.target.value;
@@ -499,22 +525,22 @@ export default function HousePotApp() {
             </label>
           )}
           {run && (
-            <p className="rounded-lg bg-white/80 px-3 py-2 font-mono text-xs text-[#3D5F58]">
-              Status: {runStatusLabelKitchen(run.status)}
+            <p className="hp-chip bg-hp-sage/10 font-mono text-hp-sage-deep">
+              {runStatusLabelKitchen(run.status)}
             </p>
           )}
           {!run?.proposal && !loading && (
-            <div className="rounded-2xl border border-dashed border-[#3D5F58]/40 bg-white/60 p-8 text-center text-sm text-zinc-600">
+            <div className="hp-empty">
               Proposal appears here. Gemma uses open weights; approve before ElevenLabs narrates.
             </div>
           )}
           {run?.approvalQuestion && (
-            <p className="rounded-xl bg-[#8BB2DE]/20 px-4 py-3 text-sm text-[#2E4742]">
+            <p className="rounded-xl border border-hp-sky/30 bg-hp-sky/15 px-4 py-3 text-pretty text-sm text-hp-sage-deep">
               {run.approvalQuestion}
             </p>
           )}
           {run?.proposal && run.preferenceScore !== undefined && (
-            <div className="rounded-xl bg-[#F5B726]/20 px-4 py-3 text-sm text-[#231F20]">
+            <div className="rounded-xl border border-hp-gold/35 bg-hp-gold/20 px-4 py-3 text-sm text-hp-ink">
               <p className="font-semibold">
                 Friend fit score: {run.preferenceScore}/100
                 {run.predictionSource ? ` · ${run.predictionSource}` : ""}
@@ -525,16 +551,16 @@ export default function HousePotApp() {
             </div>
           )}
           {run?.serpInspiration && run.serpInspiration.length > 0 && (
-            <ul className="rounded-xl bg-white p-4 text-xs text-zinc-700">
-              <p className="font-semibold text-[#2E4742]">SerpApi meal ideas</p>
+            <ul className="hp-card text-xs text-zinc-700">
+              <p className="font-semibold text-hp-sage-deep">SerpApi meal ideas</p>
               {run.serpInspiration.map((n) => (
                 <li key={n} className="mt-1 list-disc pl-4">{n}</li>
               ))}
             </ul>
           )}
           {run?.shoppingNotes && run.shoppingNotes.length > 0 && (
-            <ul className="rounded-xl bg-white p-4 text-xs text-zinc-700">
-              <p className="font-semibold text-[#2E4742]">Shopping & SerpApi hints</p>
+            <ul className="hp-card text-xs text-zinc-700">
+              <p className="font-semibold text-hp-sage-deep">Shopping & SerpApi hints</p>
               {run.shoppingNotes.map((n) => (
                 <li key={n} className="mt-1 list-disc pl-4">{n}</li>
               ))}
@@ -546,7 +572,7 @@ export default function HousePotApp() {
               <button
                 type="button"
                 onClick={copyRecipe}
-                className="text-sm font-medium text-[#3D5F58] underline"
+                className="text-sm font-semibold text-hp-sage underline decoration-hp-sage/30 underline-offset-2"
               >
                 {copiedRecipe ? "Copied!" : `Copy recipe for ${cookName}`}
               </button>
@@ -558,16 +584,16 @@ export default function HousePotApp() {
                 type="button"
                 onClick={() => approve(true, true)}
                 disabled={loading}
-                className="w-full rounded-full bg-[#3D5F58] py-3 text-sm font-semibold text-white"
+                className="hp-btn-sage hp-btn-block"
               >
                 Approve & read aloud
               </button>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row">
               <button
                 type="button"
                 onClick={() => approve(true)}
                 disabled={loading}
-                className="flex-1 rounded-full border border-[#3D5F58] py-3 text-sm font-semibold text-[#3D5F58]"
+                className="hp-btn-outline hp-btn-block flex-1"
               >
                 Approve only
               </button>
@@ -575,7 +601,7 @@ export default function HousePotApp() {
                 type="button"
                 onClick={() => approve(false)}
                 disabled={loading}
-                className="rounded-full border border-zinc-400 px-5 py-3 text-sm"
+                className="hp-btn-ghost hp-btn-block sm:w-auto"
               >
                 Not tonight
               </button>
@@ -587,23 +613,23 @@ export default function HousePotApp() {
               type="button"
               onClick={narrate}
               disabled={loading}
-              className="w-full rounded-full bg-[#F5B726] py-3 text-sm font-semibold text-[#231F20]"
+              className="hp-btn-gold hp-btn-block"
             >
               {run.status === "failed" ? "Retry narration (ElevenLabs)" : "Read recipe aloud (ElevenLabs)"}
             </button>
           )}
           {audioUrl && (
-            <audio controls className="w-full" src={audioUrl}>
+            <audio controls className="w-full rounded-xl" src={audioUrl} preload="metadata">
               Your browser does not support audio playback.
             </audio>
           )}
           {(run?.status === "narrated" || run?.status === "approved") && (
-            <div className="rounded-xl bg-white p-4">
-              <label className="block text-sm font-medium text-[#2E4742]">
+            <div className="hp-card">
+              <label className="hp-label">
                 What did {cookName} say? (saved to Mongo memory)
                 <textarea
                   rows={3}
-                  className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  className="hp-textarea mt-2 min-h-[5rem]"
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   placeholder="Too spicy / loved it / make again Thursday…"
@@ -613,7 +639,7 @@ export default function HousePotApp() {
                 type="button"
                 onClick={submitFeedback}
                 disabled={loading || !feedback.trim()}
-                className="mt-2 rounded-full bg-[#E53927] px-4 py-2 text-sm text-white disabled:opacity-50"
+                className="hp-btn-primary mt-3 disabled:opacity-50"
               >
                 Save friend feedback
               </button>
@@ -623,8 +649,8 @@ export default function HousePotApp() {
             </div>
           )}
           {pantryMemories.length > 0 && (
-            <details className="rounded-xl bg-white p-4 text-xs text-zinc-600">
-              <summary className="cursor-pointer font-mono text-[#3D5F58]">
+            <details className="hp-card text-xs text-zinc-600">
+              <summary className="cursor-pointer font-mono font-medium text-hp-sage">
                 Pantry memory ({pantryMemories.length})
               </summary>
               <ul className="mt-2 space-y-2">
@@ -638,8 +664,8 @@ export default function HousePotApp() {
             </details>
           )}
           {run?.trace && (
-            <details className="rounded-xl bg-white p-4 text-xs text-zinc-600">
-              <summary className="cursor-pointer font-mono text-[#3D5F58]">Agent trace (Sentry-ready)</summary>
+            <details className="hp-card text-xs text-zinc-600">
+              <summary className="cursor-pointer font-mono font-medium text-hp-sage">Agent trace (Sentry-ready)</summary>
               <div className="mt-2 flex flex-wrap gap-3">
                 <button
                   type="button"
@@ -668,18 +694,7 @@ export default function HousePotApp() {
         </section>
       </main>
       <IntegrationsPanel />
-      <footer className="border-t border-[#3D5F58]/15 px-6 py-6 text-center text-xs text-zinc-600">
-        <a
-          className="font-medium text-[#3D5F58] underline"
-          href="https://github.com/smriad/house-pot"
-          target="_blank"
-          rel="noreferrer"
-        >
-          house-pot on GitHub
-        </a>
-        <span className="mx-2">·</span>
-        Hacktoberfest Weekend — Build for a Friend
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

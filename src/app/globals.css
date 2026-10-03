@@ -1,28 +1,114 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --hp-cream: #f2f2eb;
+  --hp-ink: #231f20;
+  --hp-sage: #3d5f58;
+  --hp-sage-deep: #2e4742;
+  --hp-sky: #8bb2de;
+  --hp-gold: #f5b726;
+  --hp-tomato: #e53927;
+  --hp-blush: #e97b77;
+  --background: var(--hp-cream);
+  --foreground: var(--hp-ink);
+  color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-hp-cream: var(--hp-cream);
+  --color-hp-ink: var(--hp-ink);
+  --color-hp-sage: var(--hp-sage);
+  --color-hp-sage-deep: var(--hp-sage-deep);
+  --color-hp-sky: var(--hp-sky);
+  --color-hp-gold: var(--hp-gold);
+  --color-hp-tomato: var(--hp-tomato);
+  --color-hp-blush: var(--hp-blush);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--hp-cream);
+  color: var(--hp-ink);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@layer components {
+  .hp-page {
+    @apply flex min-h-dvh flex-col bg-hp-cream text-hp-ink;
+  }
+
+  .hp-container {
+    @apply mx-auto w-full max-w-5xl px-4 sm:px-6;
+  }
+
+  .hp-nav-link {
+    @apply rounded-full border border-hp-cream/25 px-3 py-1.5 text-xs font-medium text-hp-cream/95 transition-colors hover:bg-hp-cream/10 sm:text-sm;
+  }
+
+  .hp-section-title {
+    @apply font-mono text-base font-semibold text-hp-sage-deep sm:text-lg;
+  }
+
+  .hp-label {
+    @apply block text-sm font-medium text-hp-sage-deep;
+  }
+
+  .hp-input {
+    @apply mt-1.5 w-full min-h-11 rounded-xl border border-zinc-300/90 bg-white px-3.5 py-2.5 text-base text-hp-ink shadow-sm transition-[border-color,box-shadow] placeholder:text-zinc-400 focus:border-hp-sage focus:outline-none focus:ring-2 focus:ring-hp-sage/25 sm:text-sm;
+  }
+
+  .hp-textarea {
+    @apply mt-1.5 w-full min-h-[8rem] resize-y rounded-xl border border-zinc-300/90 bg-white px-3.5 py-2.5 font-mono text-sm leading-relaxed text-hp-ink shadow-sm transition-[border-color,box-shadow] placeholder:text-zinc-400 focus:border-hp-sage focus:outline-none focus:ring-2 focus:ring-hp-sage/25;
+  }
+
+  .hp-card {
+    @apply rounded-2xl border border-hp-sage/15 bg-white p-5 shadow-sm shadow-hp-sage/5 sm:p-6;
+  }
+
+  .hp-btn {
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55;
+  }
+
+  .hp-btn-primary {
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55 bg-hp-tomato text-white shadow-md shadow-hp-tomato/20 hover:brightness-105;
+  }
+
+  .hp-btn-sage {
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55 bg-hp-sage text-white shadow-md shadow-hp-sage/20 hover:brightness-105;
+  }
+
+  .hp-btn-gold {
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55 bg-hp-gold text-hp-ink shadow-md shadow-hp-gold/25 hover:brightness-105;
+  }
+
+  .hp-btn-outline {
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55 border-2 border-hp-sage bg-transparent text-hp-sage-deep hover:bg-hp-sage/5;
+  }
+
+  .hp-btn-ghost {
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,opacity,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55 border border-zinc-300 bg-white text-hp-sage-deep hover:bg-zinc-50;
+  }
+
+  .hp-btn-block {
+    @apply w-full;
+  }
+
+  .hp-chip {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
+  }
+
+  .hp-empty {
+    @apply rounded-2xl border border-dashed border-hp-sage/35 bg-white/70 p-8 text-center text-sm leading-relaxed text-zinc-600 sm:p-10;
+  }
 }
 
 @keyframes kitchen-bar {
@@ -34,5 +120,15 @@ body {
   }
   100% {
     transform: translateX(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .motion-safe\:animate-pulse,
+  .motion-safe\:animate-\[kitchen-bar_2\.4s_ease-in-out_infinite\] {
+    animation: none !important;
   }
 }
