@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "tsx --test src/lib/kitchen/pantry-check.test.ts",
     "temporal:worker": "tsx scripts/temporal-worker.ts",
     "temporal:up": "docker compose -f docker-compose.temporal.yml up -d",
     "stack:up": "bash scripts/live-stack.sh",

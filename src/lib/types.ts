@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { PantryReview } from "@/lib/kitchen/pantry-check";
 
 export const householdSchema = z.object({
   id: z.string(),
@@ -65,6 +66,7 @@ export type KitchenRun = {
   audioBase64?: string;
   mastraRunId?: string;
   approvalQuestion?: string;
+  pantryReview?: PantryReview;
   cookFeedback?: string;
   trace: RunTraceEvent[];
   idempotencyKey: string;

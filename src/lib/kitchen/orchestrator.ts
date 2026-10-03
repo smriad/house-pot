@@ -21,6 +21,7 @@ import { executeNarrationWorkflow, probeTemporal } from "@/lib/temporal/client";
 import { addBackboardMemory, searchBackboardMemories } from "@/lib/backboard";
 import { buildShoppingNotes } from "@/lib/kitchen/shopping";
 import { scoreRecipeFit } from "@/lib/kitchen/preference-score";
+import { reviewProposal } from "@/lib/kitchen/pantry-check";
 import { predictMealFit } from "@/lib/tabpfn/predict";
 import { mirrorMemoryToTiger } from "@/lib/tiger/memory";
 
@@ -136,6 +137,24 @@ export async function startKitchenRun(input: {
   );
 
   run.proposal = recipe;
+  const review = reviewProposal(recipe, input.pantryText, household.allergies);
+  run.pantryReview = review;
+  if (review.allergyHits.length > 0) {
+    recipe.allergyWarnings = [
+      ...new Set([
+        ...recipe.allergyWarnings,
+        ...review.allergyHits.map((allergy) => `Contains ${allergy}`),
+      ]),
+    ];
+  }
+  run.trace.push(
+    trace(
+      "pantry-check",
+      review.safeToNarrate
+        ? `missing: ${review.missing.join(", ") || "none"}`
+        : `blocked: ${review.allergyHits.join(", ")}`,
+    ),
+  );
   run.substituteNotes = substituteHints;
   const shopping = await runStep(run, "shopping-serp", () =>
     buildShoppingNotes(recipe, input.pantryText, household.allergies),
@@ -163,6 +182,20 @@ export async function approveKitchenRun(
 ): Promise<KitchenRun> {
   const run = await getRun(runId);
   if (!run) throw new Error("Run not found");
+
+  if (approved && run.proposal) {
+    const cook = await getHousehold(run.householdId);
+    const review = reviewProposal(run.proposal, run.pantryText, cook?.allergies ?? []);
+    run.pantryReview = review;
+    if (!review.safeToNarrate) {
+      run.trace.push(trace("approve", `blocked: ${review.allergyHits.join(", ")}`));
+      run.updatedAt = new Date().toISOString();
+      await saveRun(run);
+      throw new Error(
+        `This pot includes ${review.allergyHits.join(", ")}. House Pot will not read it aloud.`,
+      );
+    }
+  }
 
   if (run.mastraRunId) {
     try {
@@ -199,6 +232,13 @@ export async function narrateKitchenRun(
   const run = await getRun(runId);
   if (!run) throw new Error("Run not found");
   if (!run.proposal) throw new Error("No recipe proposal on this run");
+  const cook = await getHousehold(run.householdId);
+  const review = reviewProposal(run.proposal, run.pantryText, cook?.allergies ?? []);
+  if (!review.safeToNarrate) {
+    throw new Error(
+      `This pot includes ${review.allergyHits.join(", ")}. House Pot will not read it aloud.`,
+    );
+  }
   const cookApproved = run.trace.some(
     (t) => t.step === "approve" && t.detail.includes("approved"),
   );

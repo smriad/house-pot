@@ -40,7 +40,11 @@ export default function RunHistoryPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const householdId = localStorage.getItem(STORAGE_KEY);
+    const fromUrl = new URLSearchParams(window.location.search).get("household");
+    if (fromUrl?.trim()) {
+      localStorage.setItem(STORAGE_KEY, fromUrl.trim());
+    }
+    const householdId = fromUrl?.trim() || localStorage.getItem(STORAGE_KEY);
     if (!householdId) {
       setHousehold(null);
       setRuns([]);
@@ -95,11 +99,12 @@ export default function RunHistoryPage() {
       <main className="hp-container max-w-4xl flex-1 py-8 sm:py-10">
         {!loading && !household && runs.length === 0 && (
           <p className="hp-empty">
-            No household saved yet.{" "}
+            No household saved in this browser yet.{" "}
             <Link href="/" className="font-semibold text-hp-sage underline">
               Open the kitchen
             </Link>{" "}
-            and propose a meal first.
+            and save a profile (propose once), or open history with{" "}
+            <code className="text-xs">?household=&lt;id&gt;</code> from a shared link.
           </p>
         )}
 

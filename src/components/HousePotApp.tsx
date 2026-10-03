@@ -7,6 +7,7 @@ import IntegrationsPanel from "@/components/IntegrationsPanel";
 import KitchenProgress from "@/components/KitchenProgress";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { cookApprovedRun, runStatusLabel } from "@/lib/kitchen/run-display";
+import { reviewProposal, type PantryReview } from "@/lib/kitchen/pantry-check";
 
 const STORAGE_KEY = "house-pot-household-id";
 const RUN_STORAGE_KEY = "house-pot-last-run-id";
@@ -39,7 +40,7 @@ function getSpeechRecognition(): SpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-function RecipeCard({ recipe }: { recipe: Recipe }) {
+function RecipeCard({ recipe, review }: { recipe: Recipe; review: PantryReview }) {
   return (
     <article className="hp-card ring-1 ring-hp-sage/10">
       <h3 className="hp-display text-3xl text-hp-sage-deep sm:text-4xl">
@@ -48,11 +49,16 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
       <p className="mt-2 text-pretty text-sm leading-relaxed text-zinc-700 sm:text-base">
         {recipe.summary}
       </p>
-      {recipe.allergyWarnings.length > 0 && (
+      {review.allergyHits.length > 0 && (
         <p
-          className="mt-4 rounded-xl border border-hp-blush/30 bg-hp-blush/15 px-3 py-2.5 text-sm text-[#671912]"
+          className="mt-4 rounded-xl border-2 border-hp-ink bg-hp-blush/25 px-3 py-2.5 text-sm text-hp-maroon"
           role="alert"
         >
+          This pot includes {review.allergyHits.join(", ")}. House Pot will not read it aloud.
+        </p>
+      )}
+      {review.allergyHits.length === 0 && recipe.allergyWarnings.length > 0 && (
+        <p className="mt-4 rounded-xl border border-hp-blush/30 bg-hp-blush/15 px-3 py-2.5 text-sm text-hp-maroon">
           Allergy watch: {recipe.allergyWarnings.join(", ")}
         </p>
       )}
@@ -60,17 +66,27 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
         Ingredients
       </h4>
       <ul className="mt-2 space-y-1.5 text-sm text-zinc-800">
-        {recipe.ingredients.map((ing) => (
-          <li key={`${ing.item}-${ing.amount}`} className="flex gap-2 border-b border-zinc-100 py-1.5 last:border-0">
-            <span className="shrink-0 font-mono text-xs text-hp-sage">{ing.amount}</span>
-            <span>
-              {ing.item}
-              {ing.substitute ? (
-                <span className="text-zinc-500"> (or {ing.substitute})</span>
+        {recipe.ingredients.map((ing, index) => {
+          const check = review.ingredients[index];
+          return (
+            <li key={`${ing.item}-${ing.amount}`} className="flex flex-wrap items-baseline gap-2 border-b border-zinc-100 py-1.5 last:border-0">
+              <span className="shrink-0 font-mono text-xs text-hp-sage">{ing.amount}</span>
+              <span>
+                {ing.item}
+                {ing.substitute ? (
+                  <span className="text-zinc-500"> (or {ing.substitute})</span>
+                ) : null}
+              </span>
+              {check?.allergyHit ? (
+                <span className="hp-chip bg-hp-blush/40 text-hp-maroon">allergy</span>
+              ) : check && !check.onHand ? (
+                <span className="hp-chip bg-hp-sky/40 text-hp-sage-deep">not in the pantry</span>
+              ) : check?.onHand && !check.staple ? (
+                <span className="hp-chip bg-hp-gold/50 text-hp-ink">in the kitchen</span>
               ) : null}
-            </span>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
       <h4 className="mt-5 text-xs font-semibold uppercase tracking-wider text-hp-sage">
         Steps
@@ -311,6 +327,7 @@ export default function HousePotApp() {
     setLoading(true);
     setError(null);
     try {
+      if (approved) await ensureHousehold();
       const res = await fetch(`/api/runs/${run.id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -378,6 +395,19 @@ export default function HousePotApp() {
     setCopiedRecipe(true);
     window.setTimeout(() => setCopiedRecipe(false), 2000);
   };
+
+  const allergyList = useMemo(
+    () =>
+      allergies
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    [allergies],
+  );
+  const pantryReview = useMemo(() => {
+    if (!run?.proposal) return null;
+    return reviewProposal(run.proposal, run.pantryText, allergyList);
+  }, [allergyList, run]);
 
   const showApproveActions =
     run?.proposal && run.status === "awaiting_approval";
@@ -569,9 +599,9 @@ export default function HousePotApp() {
               ))}
             </ul>
           )}
-          {run?.proposal && (
+          {run?.proposal && pantryReview && (
             <>
-              <RecipeCard recipe={run.proposal} />
+              <RecipeCard recipe={run.proposal} review={pantryReview} />
               <button
                 type="button"
                 onClick={copyRecipe}
@@ -581,12 +611,21 @@ export default function HousePotApp() {
               </button>
             </>
           )}
-          {showApproveActions && (
+          {showApproveActions && pantryReview && (
             <div className="flex flex-col gap-3">
+              <p className="text-sm leading-relaxed text-hp-sage-deep">
+                {pantryReview.safeToNarrate
+                  ? pantryReview.missing.length === 0
+                    ? "Every ingredient is already in the kitchen."
+                    : `Not in the pantry: ${pantryReview.missing.join(", ")}.`
+                  : `Reading this aloud stays off because it includes ${pantryReview.allergyHits.join(", ")}.`}
+                {" "}
+                ElevenLabs speaks only this recipe, and only after you approve.
+              </p>
               <button
                 type="button"
                 onClick={() => approve(true, true)}
-                disabled={loading}
+                disabled={loading || !pantryReview.safeToNarrate}
                 className="hp-btn-sage hp-btn-block"
               >
                 Approve & read aloud
@@ -595,7 +634,7 @@ export default function HousePotApp() {
               <button
                 type="button"
                 onClick={() => approve(true)}
-                disabled={loading}
+                disabled={loading || !pantryReview.safeToNarrate}
                 className="hp-btn-outline hp-btn-block flex-1"
               >
                 Approve only
@@ -615,7 +654,7 @@ export default function HousePotApp() {
             <button
               type="button"
               onClick={narrate}
-              disabled={loading}
+              disabled={loading || pantryReview?.safeToNarrate === false}
               className="hp-btn-gold hp-btn-block"
             >
               {run.status === "failed" ? "Retry narration (ElevenLabs)" : "Read recipe aloud (ElevenLabs)"}
