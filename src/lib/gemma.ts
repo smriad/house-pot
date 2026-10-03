@@ -19,12 +19,22 @@ function client(): OpenAI {
 }
 
 export async function probeGemma(): Promise<boolean> {
+  const openai = client();
+  const model = process.env.GEMMA_MODEL?.trim() || "gemma3:4b";
   try {
-    const openai = client();
-    await openai.models.list();
+    await openai.models.retrieve(model);
     return true;
   } catch {
-    return false;
+    try {
+      await openai.chat.completions.create({
+        model,
+        max_tokens: 1,
+        messages: [{ role: "user", content: "ok" }],
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 

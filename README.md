@@ -68,9 +68,11 @@ Groq [retired `gemma2-9b-it`](https://console.groq.com/docs/deprecations) (Oct 2
 | --- | --- |
 | `GEMMA_BASE_URL` | `https://generativelanguage.googleapis.com/v1beta/openai/` |
 | `GEMMA_API_KEY` | your AI Studio key |
-| `GEMMA_MODEL` | `gemma-4-4b-it` (or `gemma-4-31b-it`) |
+| `GEMMA_MODEL` | `gemini-2.5-flash` for OpenAI-compat chat on AI Studio |
 
-If propose returns 400 about JSON mode, remove `response_format` in code or self-host Ollama (`gemma3:4b`).
+Gemma 4 IDs (`gemma-4-4b-it`, etc.) may **404** on the OpenAI shim — use **Ollama** (`gemma3:4b`) for true Gemma locally and `gemini-2.5-flash` on Render for the live demo, or Groq below.
+
+If propose returns 400 about JSON mode, self-host Ollama (`gemma3:4b`).
 
 **Groq (fast OpenAI-compatible, not Gemma)**
 
