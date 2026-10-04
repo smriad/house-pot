@@ -145,7 +145,7 @@ try {
       .waitFor({ state: "visible", timeout: 90_000 })
       .catch(() => undefined);
     await sleep(1500);
-    const panel = page.locator("section").filter({ hasText: "Sponsor integrations" });
+    const panel = page.locator("section").filter({ hasText: "Kitchen services" });
     const cards = panel.locator("div.rounded-2xl.border-2");
     const n = await cards.count();
     for (let i = 0; i < n; i++) {

@@ -74,6 +74,18 @@ function onHand(item: string, pantryTokens: Set<string>): boolean {
   );
 }
 
+/** Clone a recipe with one extra ingredient — used to show the allergy gate without calling the model. */
+export function slipIngredient(
+  recipe: Recipe,
+  item: string,
+  amount = "1 handful",
+): Recipe {
+  return {
+    ...recipe,
+    ingredients: [...recipe.ingredients, { item, amount }],
+  };
+}
+
 export function reviewProposal(
   recipe: Recipe,
   pantryText: string,

@@ -7,7 +7,13 @@ import IntegrationsPanel from "@/components/IntegrationsPanel";
 import KitchenProgress from "@/components/KitchenProgress";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { cookApprovedRun, runStatusLabel } from "@/lib/kitchen/run-display";
-import { reviewProposal, type PantryReview } from "@/lib/kitchen/pantry-check";
+import { reviewProposal, slipIngredient, type PantryReview } from "@/lib/kitchen/pantry-check";
+
+const FEEDBACK_CHIPS = [
+  "The dal was right — use a little less cumin next time.",
+  "Loved it, cook again.",
+  "Too spicy for the kids.",
+];
 
 const STORAGE_KEY = "house-pot-household-id";
 const RUN_STORAGE_KEY = "house-pot-last-run-id";
@@ -156,6 +162,7 @@ export default function HousePotApp() {
   const [runHistory, setRunHistory] = useState<KitchenRun[]>([]);
   const [copiedRecipe, setCopiedRecipe] = useState(false);
   const [hydrating, setHydrating] = useState(true);
+  const [slipReview, setSlipReview] = useState<PantryReview | null>(null);
 
   const audioUrl = useMemo(() => {
     if (!run?.audioBase64) return null;
@@ -203,6 +210,7 @@ export default function HousePotApp() {
 
   const persistRun = useCallback((next: KitchenRun) => {
     setRun(next);
+    setSlipReview(null);
     localStorage.setItem(RUN_STORAGE_KEY, next.id);
   }, []);
 
@@ -483,19 +491,25 @@ export default function HousePotApp() {
     <div className="hp-page">
       <SiteHeader
         compact
-        title="Build for a Friend"
-        subtitle={`Gemma plans from your pantry. MongoDB remembers allergies. ElevenLabs reads aloud only after ${cookName || "your cook"} approves.`}
+        title="Amma approves first — then it speaks"
+        subtitle={`“I will not listen to the voice until I tap approve.” One pot from tonight’s pantry for ${cookName || "Amma"} in Dhaka. Allergies are code. ElevenLabs only hears the card she accepts.`}
       />
 
-      {health && (
-        <p className="hp-container border-b border-hp-ink/10 bg-hp-gold/30 px-4 py-1.5 font-mono text-[10px] leading-snug text-hp-sage-deep tabular-nums sm:text-[11px]">
-          gemma:{String(health.gemma)} · {String(health.storage ?? "local")} · elevenlabs:
-          {health.elevenlabs ? "tts" : "off"}
-          {health.elevenlabsStt ? "+scribe" : ""} · temporal:
-          {health.temporal ? "on" : "off"} · embed:
-          {health.embeddings ? "on" : "off"}
-        </p>
-      )}
+      <div className="border-b border-hp-ink/10 bg-hp-gold/25">
+        <div className="hp-container flex flex-col gap-1 px-4 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <p className="text-xs leading-snug text-hp-sage-deep sm:text-sm">
+            <span className="font-semibold">Sixty seconds:</span> leave Amma’s
+            defaults → Propose → read the marks → Approve &amp; read aloud.
+            Then tap “If shrimp slipped in” to see the gate without calling the model.
+          </p>
+          {health && (
+            <p className="shrink-0 font-mono text-[10px] leading-snug text-hp-sage-deep tabular-nums sm:text-[11px]">
+              gemma:{String(health.gemma)} · {String(health.storage ?? "local")} ·
+              elevenlabs:{health.elevenlabs ? "tts" : "off"}
+            </p>
+          )}
+        </div>
+      </div>
 
       <main
         className="hp-container grid flex-1 gap-6 py-5 sm:py-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]"
@@ -585,6 +599,9 @@ export default function HousePotApp() {
           {voiceTranscript && (
             <p className="text-xs text-zinc-600">
               Voice transcript{lastTranscribeEngine ? ` (${lastTranscribeEngine})` : ""}: {voiceTranscript}
+              <span className="mt-1 block text-[11px] text-hp-sage-deep">
+                This note is for the pantry line only. ElevenLabs never receives it — only the approved recipe text.
+              </span>
             </p>
           )}
           {error && (
@@ -640,7 +657,7 @@ export default function HousePotApp() {
             <div className="hp-empty">
               <p className="hp-display text-3xl text-hp-sage-deep">The pot is waiting</p>
               <p className="mx-auto mt-3 max-w-sm">
-                Proposal appears here. Gemma uses open weights; approve before ElevenLabs narrates.
+                Gemma drafts one dish. Code checks peanuts and shellfish. Nothing is read aloud until {cookName || "Amma"} taps approve.
               </p>
             </div>
           )}
@@ -768,6 +785,54 @@ export default function HousePotApp() {
                 Not tonight
               </button>
               </div>
+              {pantryReview.safeToNarrate && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!run?.proposal) return;
+                    const slipped = slipIngredient(run.proposal, "shrimp", "200 g");
+                    setSlipReview(reviewProposal(slipped, run.pantryText, allergyList));
+                  }}
+                  className="text-left text-xs font-semibold text-hp-maroon underline decoration-hp-maroon/30 underline-offset-2"
+                >
+                  If shrimp slipped in (no model call)
+                </button>
+              )}
+            </div>
+          )}
+          {run?.proposal && pantryReview?.safeToNarrate && !showApproveActions && !slipReview && (
+            <button
+              type="button"
+              onClick={() => {
+                if (!run.proposal) return;
+                const slipped = slipIngredient(run.proposal, "shrimp", "200 g");
+                setSlipReview(reviewProposal(slipped, run.pantryText, allergyList));
+              }}
+              className="text-left text-xs font-semibold text-hp-maroon underline decoration-hp-maroon/30 underline-offset-2"
+            >
+              If shrimp slipped in (no model call)
+            </button>
+          )}
+          {slipReview && (
+            <div
+              className="rounded-xl border-2 border-hp-ink bg-hp-blush/20 px-3 py-3 text-sm text-hp-maroon"
+              role="status"
+            >
+              <p className="font-semibold">
+                Same card, one extra ingredient: shrimp.
+              </p>
+              <p className="mt-1.5 text-xs leading-relaxed sm:text-sm">
+                {slipReview.safeToNarrate
+                  ? "This household’s allergy list did not catch shrimp — check pantry-check.ts."
+                  : `Approve stays off. pantry-check.ts flagged ${slipReview.allergyHits.join(", ")}. Gemma never ran. ElevenLabs never ran.`}
+              </p>
+              <button
+                type="button"
+                onClick={() => setSlipReview(null)}
+                className="mt-2 text-xs font-semibold underline underline-offset-2"
+              >
+                Hide slip demo
+              </button>
             </div>
           )}
           {showNarrateActions && run.status !== "narrated" && (
@@ -781,22 +846,39 @@ export default function HousePotApp() {
             </button>
           )}
           {audioUrl && (
-            <audio controls className="w-full rounded-xl" src={audioUrl} preload="metadata">
-              Your browser does not support audio playback.
-            </audio>
+            <div className="space-y-1.5">
+              <audio controls className="w-full rounded-xl" src={audioUrl} preload="metadata">
+                Your browser does not support audio playback.
+              </audio>
+              <p className="text-[11px] leading-snug text-hp-sage-deep">
+                ElevenLabs · approved recipe text only. The pantry recording was never sent.
+              </p>
+            </div>
           )}
           {(run?.status === "narrated" || run?.status === "approved") && (
             <div className="hp-card space-y-2 p-3">
               <label className="hp-label text-xs">
-                Feedback for {cookName} (Mongo memory)
+                Feedback for {cookName} (saved to household memory)
                 <textarea
                   rows={2}
                   className="hp-textarea mt-1 min-h-[3.5rem]"
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
-                  placeholder="Too spicy / loved it…"
+                  placeholder="The dal was right — use a little less cumin next time."
                 />
               </label>
+              <div className="flex flex-wrap gap-1.5">
+                {FEEDBACK_CHIPS.map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => setFeedback(chip)}
+                    className="rounded-full border border-hp-sage/30 bg-hp-cream px-2.5 py-1 text-[11px] text-hp-sage-deep hover:border-hp-sage"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
               <button
                 type="button"
                 onClick={submitFeedback}

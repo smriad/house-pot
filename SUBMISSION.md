@@ -7,138 +7,67 @@ tags: devchallenge, weekendchallenge, hf26challenge
 
 *Submission for [Hacktoberfest Weekend: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)* — `#hf26challenge`
 
-**House Pot** is a kitchen app for **Amma** in Dhaka: **one** recipe from tonight’s pantry, allergies enforced in code, **ElevenLabs** only after she taps **Approve & read aloud**.
+> “The dal was right—use a little less cumin next time. And I will not listen to the voice until I tap approve.”
+> — Amma
 
-## The problem
+## What I Built
 
-Weeknight dinner in our flat is not “pick a trending recipe.” It is **what came back from the market**, who is eating, and **who cannot eat peanuts or shellfish**. That breaks down when:
+**House Pot** is one weeknight dinner for **Amma**, who runs the stove in our Dhaka flat.
 
-- the pantry is **fixed for tonight** (dal, rice, greens—whatever was affordable)
-- **allergy mistakes are not acceptable** (a cousin’s peanut reaction is not a disclaimer)
-- the cook wants **one answer**, not ten options and a wall of text
-- **voice is welcome**, but only after she has accepted the exact dish on screen
+The pantry is whatever came back from the market. A cousin cannot eat peanuts or shellfish. She wants **one dish**, not a feed. Voice is welcome **after** she has accepted the exact card on screen — not before, and not as a disclaimer the model wrote.
 
-**Amma** runs our stove in Dhaka—habit, memory, and the household allergy list in her head. House Pot is for her and anyone in the same setup: real constraints, **approve-before-you-listen**.
+So the app does three jobs, in that order:
 
-Defaults: cook **Amma**, allergies **peanuts** and **shellfish**, pantry `red lentils, onion, garlic, rice, cumin, spinach, yogurt`.
+1. **Gemma** proposes one JSON recipe from tonight’s pantry and the household allergy list.
+2. **`pantry-check.ts`** marks in-kitchen vs missing and **blocks Approve** on allergens. Shrimp counts as shellfish. The model does not get a vote.
+3. **ElevenLabs** reads the approved card aloud. It never sees the pantry voice note.
 
-## How I'm solving it
+Defaults on the live site: cook Amma, allergies peanuts and shellfish, pantry `red lentils, onion, garlic, rice, cumin, spinach, yogurt`.
 
-| Piece | What it does |
-| --- | --- |
-| **Gemma** | One structured JSON recipe from pantry + allergies (optional critic pass) |
-| **`pantry-check.ts`** | In-kitchen vs missing; **blocks approve** on allergens—not “the model said it’s fine” |
-| **ElevenLabs** | TTS only on the **approved** card; approve/narrate **re-run** the same checks |
-| **MongoDB Atlas** | Household, runs, feedback (“less cumin next time”) |
-| **Whisper** (local) | Pantry dictation; optional **Gemma pantry extract** after STT |
-| **ML loop** | TabPFN + heuristic friend-fit; feedback → `meal_fit_training` rows (`npm run export:training`) |
-
-**Design:** plan (Gemma, optional multi-draft rank) → policy (`pantry-check` + embedding **hints only**) → deliver (TTS gated on approve). Full BRD, C4, ML tables: [README](https://github.com/smriad/house-pot).
-
-**ML (approve-first):** `PROPOSE_CANDIDATES` can ask Gemma for up to 3 drafts and pick one; semantic allergen near-misses show on the card but **never** replace code blocks. Cook feedback stores features for later TabPFN/sklearn export—not auto-retraining on Render.
-
-**Smoke run:** Gemma proposed **Mild Spinach and Red Lentil Dal with Rice**; every ingredient matched the pantry; audio waited for approve.
-
-## Architecture
-
-Next.js on **Render** (public demo) · **Gemma** (Ollama locally, hosted `GEMMA_*` on Render) · **MongoDB** · deterministic **`pantry-check`** · **ElevenLabs** after approve · **Mastra** approval gate · optional **Temporal** narrate when a worker is up.
-
-```mermaid
-sequenceDiagram
-  participant U as Browser
-  participant API as Next.js
-  participant G as Gemma
-  participant P as pantry-check
-  participant E as ElevenLabs
-  U->>API: POST /api/runs
-  API->>G: propose JSON
-  API->>P: review allergies
-  API-->>U: recipe card
-  U->>API: approve then narrate
-  API->>P: re-check
-  API->>E: TTS approved text only
-```
-
-Same repo locally and live: my laptop runs Whisper, TabPFN, Temporal, Backboard/Tiger mirrors—see `GET /api/health`. Render turns off heavy Python paths so judges can click without Ollama. **Sponsor integrations** (17 probes on the kitchen page) reflects the same stack—Render deploy, not DigitalOcean.
+I handed her the dal. She ate it. The quote above is the spec.
 
 ## Demo
 
-**Live:** https://house-pot.onrender.com/
+**Live:** https://house-pot.onrender.com/ (free-tier cold start ~60s)
 
-<video src="https://house-pot.onrender.com/demo.mp4" controls width="100%" title="House Pot — voiced UI walkthrough (kitchen, integrations, history)"></video>
+**Sixty seconds:** leave the defaults → **Propose tonight’s pot** → read the marks → **Approve & read aloud**. Then tap **If shrimp slipped in**. That last click does not call Gemma or ElevenLabs. It adds shrimp to the same card and runs `pantry-check.ts` so you can see Approve stay off.
 
-**[~50s voiced slideshow](https://house-pot.onrender.com/demo.mp4)** — five live screenshots, ElevenLabs narration (one line per slide):
+[Amma’s narrated run](https://house-pot.onrender.com/?run=bdb0308d-d198-4ef1-891f-bad4dc7aa50b) · [all pots](https://house-pot.onrender.com/history/all) · [video](https://house-pot.onrender.com/demo.mp4)
 
-| Slide | File | What you see |
-| --- | --- | --- |
-| 1 | `01-kitchen-top.png` | Kitchen hero |
-| 2 | `02-kitchen-form.png` | Cook profile, pantry, speech/record |
-| 3 | `03-integrations-dashboard.png` | Sponsor integrations probe grid |
-| 4 | `04-history-all.png` | All pots |
-| 5 | `05-household-history.png` | Amma household history |
-
-Also try: [Amma narrated run](https://house-pot.onrender.com/?run=bdb0308d-d198-4ef1-891f-bad4dc7aa50b) · [all pots](https://house-pot.onrender.com/history/all)
-
-**Regenerate and ship:**
-
-```bash
-BASE_URL=https://house-pot.onrender.com npm run demo:screenshots
-DEMO_REUSE_VOICE=0 npm run demo:from-screenshots   # ELEVENLABS_API_KEY in .env.local
-# commit public/demo.mp4 + public/demo-screenshots/ → deploy Render
-```
-
-Optional longer tour (kitchen + approve + recipe audio): `DEMO_REUSE_VOICE=0 BASE_URL=https://house-pot.onrender.com npm run demo:record`.
-
-<details>
-<summary>Screenshot stills (same order as the video)</summary>
-
-![Kitchen hero](https://house-pot.onrender.com/demo-screenshots/01-kitchen-top.png)
-
-![Kitchen form](https://house-pot.onrender.com/demo-screenshots/02-kitchen-form.png)
-
-![Integrations dashboard](https://house-pot.onrender.com/demo-screenshots/03-integrations-dashboard.png)
-
-![All pot history](https://house-pot.onrender.com/demo-screenshots/04-history-all.png)
-
-![Amma household history](https://house-pot.onrender.com/demo-screenshots/05-household-history.png)
-
-</details>
-
-**Judges:** open the live URL (cold start on free tier ~60s). Scroll to **Sponsor integrations → Show dashboard** for the probe grid. Then propose with **Amma**, allergies **peanuts, shellfish**, tap **Approve & read aloud** only when marks look safe.
+<video src="https://house-pot.onrender.com/demo.mp4" controls width="100%" title="House Pot — kitchen walkthrough"></video>
 
 ## Code
 
-https://github.com/smriad/house-pot — `pantry-check.ts`, `orchestrator.ts`, `propose-rank.ts`, `meal-fit-features.ts`, `gemma/pantry-extract.ts`, `store.ts`, `HousePotApp.tsx`, `IntegrationsPanel.tsx`, `render.yaml`.
+https://github.com/smriad/house-pot — start at `pantry-check.ts`, then `orchestrator.ts`, `approve/route.ts`, `narrate/route.ts`, `HousePotApp.tsx`.
 
-**Stack in one line:** Gemma plans (optional rank) · code enforces pantry + allergens · MongoDB remembers + training export · ElevenLabs after approve · `/history/all` for judges · voiced `demo.mp4` from live screenshots.
+## How I Built It
+
+Open-weight **Gemma** is good at a dal from lentils and spinach. It is not a doctor. Competitors in this challenge put allergies in the prompt and hope. I put them in TypeScript and **re-run the same check on approve and on narrate**, so a stale “yes” cannot speak a changed ingredient list.
+
+The human gate is one executable action: *speak this recipe*. Not a transcript. Not “the model said it was fine.” [The approval-queue pattern](https://dev.to/draganristicrsjpg/the-approval-queue-pattern-putting-a-human-in-the-loop-without-putting-them-in-the-way-3ldl) is spend the human only where the action is irreversible; [tie approval to the exact artifact](https://dev.to/hiroshi_takamura_c851fe71/tie-human-approval-to-the-exact-version-an-ai-agent-delivered-b6e) so “approved” cannot drift. House Pot binds approve to **this** `proposal` and **this** `pantryReview`.
+
+ElevenLabs is the closed piece on purpose. It sits **behind** the gate and receives **recipe text only**. MongoDB keeps the household, the run, and “less cumin next time” so tomorrow’s propose is not a lecture.
+
+Locally, the same repo talks to Ollama (`gemma3:4b`), Whisper, and optional TabPFN. Render uses hosted `GEMMA_*` so a judge on a phone can click without installing anything. I say that plainly rather than pretending the public URL is air-gapped.
 
 ## Why Does Open Innovation Matter?
 
-In a Dhaka household the sensitive data is not “inspiration.” It is **who reacts to peanuts**, what **Amma bought** before the monsoon rain, and what we **cannot** ship to a closed meal API abroad.
+In this kitchen the sensitive data is not “inspiration.” It is **who reacts to peanuts**, what Amma bought before the rain, and what we will not ship to a closed meal API abroad.
 
-Open-weight **Gemma** can plan on a machine we run; validation stays ours. The Render demo uses hosted inference so judges anywhere can try it—I say that plainly rather than pretending the box is offline-only.
-
-**ElevenLabs** is the closed piece, and it sits **behind** approve—it never sees the pantry voice note, only the recipe she accepted. MongoDB holds allergies, habits, and “a little less chili next time” so family lunch is not a repeat lecture.
+Open-weight Gemma can plan on a machine we run. Validation stays in our repo. The Render demo is hosted so you can try it — the policy layer is still the TypeScript you can read. Swapping the planner is an env var; swapping the allergen rules is a pull request.
 
 ## Prize Categories
 
-- **Best Use of Gemma** — one pantry-constrained JSON recipe per night.
-- **Best Use of ElevenLabs** — narration only after approve (demo video + recipe TTS).
-- **Best Use of MongoDB Atlas** — household memory + `meal_fit_training` feedback rows on the live URL.
+- **Best Use of ElevenLabs** — TTS only after approve; pantry audio never sent; the live “If shrimp slipped in” path never reaches TTS.
+- **Best Use of Gemma** — one pantry-constrained JSON recipe, optional critic, never the safety authority.
+- **Best Use of MongoDB Atlas** — household + runs + cook feedback (`meal_fit_training`) on the live URL.
 - **Best Use of Render** — https://house-pot.onrender.com/ from `render.yaml`.
 
 ## My Agent Sessions
 
 {% agent_session 432 %}
 
-[Full HF26 build log — demo, ML, submission sync](https://dev.to/agent_sessions/house-pot-full-hf26-build-log-demo-ml-submission-sync-eezqug) (session **432**, 22 curated turns). **Make Public** on DEV so judges can open the embed.
-
-Earlier snapshot: [session 422](https://dev.to/agent_sessions/house-pot-demo-video-tech-voiceover-and-dev-submission-sync-xuczlj) (superseded).
-
-## Friend quote
-
-> “The dal was right—use a little less cumin next time. And I will not listen to the voice until I tap approve.”  
-> — Amma
+[Build log](https://dev.to/agent_sessions/house-pot-full-hf26-build-log-demo-ml-submission-sync-eezqug) (session **432**). Make **Public** on DEV so the embed works.
 
 ---
 

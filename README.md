@@ -287,7 +287,7 @@ TEMPORAL_NARRATE=false
 TABPFN_DISABLE=true
 ```
 
-Use the in-app **Sponsor integrations** panel or `GET /api/health` on each environment to see which probes are `live`.
+Use the in-app **Kitchen services** panel or `GET /api/health` on each environment to see which probes are `live`.
 
 **Demo assets (after deploy):** https://house-pot.onrender.com/cover.jpg · https://house-pot.onrender.com/demo.mp4 · https://house-pot.onrender.com/demo-screenshots/
 
@@ -302,7 +302,7 @@ DEMO_REUSE_VOICE=0 npm run demo:from-screenshots   # needs ELEVENLABS_API_KEY in
 | --- | --- |
 | `01-kitchen-top.png` | Kitchen hero |
 | `02-kitchen-form.png` | Cook profile, pantry textarea, record/speech |
-| `03-integrations-dashboard.png` | **Sponsor integrations** probe grid (full viewport) |
+| `03-integrations-dashboard.png` | **Kitchen services** probe grid (full viewport) |
 | `04-history-all.png` | All pots (`/history/all`) |
 | `05-household-history.png` | Amma household history |
 
@@ -372,14 +372,14 @@ Agent steps are wrapped with Sentry spans (`withAgentSpan`) when `SENTRY_DSN` is
 
 ## Technologies — how and why
 
-Tables below match what we **actually run**: **`live` on local dev** (`npm run dev` → `GET /api/health`) and what is **live on Render** today. **SerpApi** is not configured on production (no key). The in-app **Sponsor integrations** panel runs **17** local probes (deploy: Render, GitHub Actions, Entire export—no DigitalOcean path).
+Tables below match what we **actually run**: **`live` on local dev** (`npm run dev` → `GET /api/health`) and what is **live on Render** today. **SerpApi** is not configured on production (no key). The in-app **Kitchen services** panel runs **17** local probes (deploy: Render, GitHub Actions, Entire export—no DigitalOcean path).
 
 | Environment | Live integrations (summary) |
 | --- | --- |
 | **Local dev** | Gemma (Ollama), embeddings, Whisper, ElevenLabs, MongoDB, Mastra, Temporal, Backboard, Tiger, TabPFN, Sentry, TheMealDB, Open Food Facts |
 | **[Render](https://house-pot.onrender.com/api/health)** | Gemma, MongoDB, ElevenLabs, Mastra, Backboard, Tiger, Sentry, TheMealDB, Open Food Facts — Whisper, Temporal, embeddings, TabPFN, SerpApi **off** by design |
 
-Hacktoberfest narrative and prize framing: [`SUBMISSION.md`](./SUBMISSION.md). **Sponsor integrations** mirrors the same probes as `GET /api/integrations`.
+Hacktoberfest narrative and prize framing: [`SUBMISSION.md`](./SUBMISSION.md). **Kitchen services** mirrors the same probes as `GET /api/integrations`.
 
 ### Core application
 

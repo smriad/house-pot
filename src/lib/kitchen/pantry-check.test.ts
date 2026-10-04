@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { reviewProposal } from "./pantry-check";
+import { reviewProposal, slipIngredient } from "./pantry-check";
 import type { Recipe } from "@/lib/types";
 
 function recipe(ingredients: Recipe["ingredients"]): Recipe {
@@ -51,6 +51,15 @@ test("treats shrimp as shellfish", () => {
     ["shellfish"],
   );
   assert.equal(review.safeToNarrate, false);
+});
+
+test("slipping shrimp into a safe dal blocks narration without calling the model", () => {
+  const safe = recipe([{ item: "red lentils", amount: "1 cup" }]);
+  assert.equal(reviewProposal(safe, pantry, ["peanuts", "shellfish"]).safeToNarrate, true);
+  const slipped = slipIngredient(safe, "shrimp", "200 g");
+  const review = reviewProposal(slipped, pantry, ["peanuts", "shellfish"]);
+  assert.equal(review.safeToNarrate, false);
+  assert.deepEqual(review.allergyHits, ["shellfish"]);
 });
 
 test("checks a substitute the same way as the ingredient", () => {

@@ -223,10 +223,10 @@ export default function IntegrationsPanel() {
       <div className="hp-container flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-mono text-sm uppercase tracking-widest text-hp-sky">
-            Sponsor integrations
+            Kitchen services
           </h2>
           <p className="mt-1 text-xs text-hp-cream/80">
-            Local probes only — nothing is submitted from this panel.
+            Optional probes — the product is the kitchen above, not this grid.
           </p>
         </div>
         <button

@@ -62,11 +62,11 @@ try {
     .catch(() => undefined);
   await page.waitForTimeout(2500);
 
-  const panel = page.locator("section").filter({ hasText: "Sponsor integrations" });
+  const panel = page.locator("section").filter({ hasText: "Kitchen services" });
   await panel.scrollIntoViewIfNeeded();
   await page.evaluate(() => {
     const el = [...document.querySelectorAll("section")].find((s) =>
-      s.textContent?.includes("Sponsor integrations"),
+      s.textContent?.includes("Kitchen services"),
     );
     el?.scrollIntoView({ block: "start" });
     window.scrollBy(0, -8);
