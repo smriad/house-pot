@@ -129,9 +129,11 @@ Open-weight **Gemma** can plan on a machine we run; validation stays ours. The R
 
 ## My Agent Sessions
 
-{% agent_session 422 %}
+{% agent_session 432 %}
 
-[Build log — demo video, voiceover, submission sync](https://dev.to/agent_sessions/house-pot-demo-video-tech-voiceover-and-dev-submission-sync-xuczlj) (session **422**; make **Public** on DEV for the embed).
+[Full HF26 build log — demo, ML, submission sync](https://dev.to/agent_sessions/house-pot-full-hf26-build-log-demo-ml-submission-sync-eezqug) (session **432**, 22 curated turns). **Make Public** on DEV so judges can open the embed.
+
+Earlier snapshot: [session 422](https://dev.to/agent_sessions/house-pot-demo-video-tech-voiceover-and-dev-submission-sync-xuczlj) (superseded).
 
 ## Friend quote
 
