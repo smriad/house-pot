@@ -67,9 +67,24 @@ Same repo locally and live: my laptop runs Whisper, TabPFN, Temporal, Backboard/
 
 <video src="https://house-pot.onrender.com/demo.mp4" controls width="100%" title="House Pot demo — technology tour and approved recipe narration"></video>
 
-[~5 min tour](https://house-pot.onrender.com/demo.mp4) · [Amma narrated run](https://house-pot.onrender.com/?run=bdb0308d-d198-4ef1-891f-bad4dc7aa50b) · [all pots (3)](https://house-pot.onrender.com/history/all)
+[~6 min tour + screenshot reel](https://house-pot.onrender.com/demo.mp4) · [Amma narrated run](https://house-pot.onrender.com/?run=bdb0308d-d198-4ef1-891f-bad4dc7aa50b) · [all pots](https://house-pot.onrender.com/history/all)
 
-**Judges:** open the live URL (cold start on free tier ~60s). Keep **Amma**, allergies **peanuts, shellfish**, the pantry line above, tap **Propose tonight's pot**, then **Approve & read aloud** only when marks look safe. Disabled approve shows why—that is the product.
+The video ends with a **live screenshot slideshow** (kitchen, **Sponsor integrations** 13/18 live, each sponsor card, pot history). Regenerate: `npm run demo:screenshots` then `npm run demo:splice-screenshots` (or full `npm run demo:record` with the integrations chapter).
+
+<details>
+<summary>Sponsor integrations (live screenshots)</summary>
+
+![Kitchen](https://house-pot.onrender.com/demo-screenshots/01-kitchen-top.png)
+
+![Integrations dashboard](https://house-pot.onrender.com/demo-screenshots/04-integrations-header.png)
+
+![Gemma](https://house-pot.onrender.com/demo-screenshots/05-integration-01-gemma-open-weights.png) ![MongoDB](https://house-pot.onrender.com/demo-screenshots/05-integration-02-mongodb-atlas.png) ![ElevenLabs](https://house-pot.onrender.com/demo-screenshots/05-integration-04-elevenlabs.png) ![Mastra](https://house-pot.onrender.com/demo-screenshots/05-integration-07-mastra.png) ![Render](https://house-pot.onrender.com/demo-screenshots/05-integration-15-render-deploy.png) ![GitHub Actions](https://house-pot.onrender.com/demo-screenshots/05-integration-17-github-actions.png)
+
+More PNGs in [public/demo-screenshots](https://github.com/smriad/house-pot/tree/main/public/demo-screenshots) (18 sponsor cards + history).
+
+</details>
+
+**Judges:** open the live URL (cold start on free tier ~60s). Scroll to **Sponsor integrations → Show dashboard** for the probe grid. Then propose with **Amma**, allergies **peanuts, shellfish**, tap **Approve & read aloud** only when marks look safe.
 
 ## Code
 

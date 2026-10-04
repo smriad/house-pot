@@ -133,6 +133,36 @@ try {
     await pointTo(page, page.getByText(/elevenlabs/i).first());
   });
 
+  await chapter(page, "integrations", voiceFiles.integrations, 24, async () => {
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    const showBtn = page.getByRole("button", { name: /Show dashboard/i });
+    if (await showBtn.isVisible().catch(() => false)) {
+      await clickWithCursor(page, showBtn);
+    }
+    await page
+      .getByText(/live|off/)
+      .first()
+      .waitFor({ state: "visible", timeout: 90_000 })
+      .catch(() => undefined);
+    await sleep(1500);
+    const panel = page.locator("section").filter({ hasText: "Sponsor integrations" });
+    const cards = panel.locator("div.rounded-2xl.border-2");
+    const n = await cards.count();
+    for (let i = 0; i < n; i++) {
+      const card = cards.nth(i);
+      await card.scrollIntoViewIfNeeded();
+      await page.evaluate(() => window.scrollBy(0, -24));
+      await pointTo(page, card);
+      await sleep(350);
+    }
+    const refresh = page.getByRole("button", { name: /Refresh probes/i });
+    if (await refresh.isVisible().catch(() => false)) {
+      await pointTo(page, refresh);
+      await sleep(1200);
+    }
+    await page.evaluate(() => window.scrollTo(0, 0));
+  });
+
   await chapter(page, "mongodb_profile", voiceFiles.mongodb_profile, 14, async () => {
     await pointTo(page, page.getByLabel("Cook's name"));
     await pointTo(page, page.getByLabel("Allergies"));

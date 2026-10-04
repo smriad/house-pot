@@ -289,7 +289,16 @@ TABPFN_DISABLE=true
 
 Use the in-app **Sponsor integrations** panel or `GET /api/health` on each environment to see which probes are `live`.
 
-**Demo assets (after deploy):** https://house-pot.onrender.com/cover.jpg · https://house-pot.onrender.com/demo.mp4 — `npm run demo:record` (1080p, male Bangladesh-style voice: technology / where / how in `scripts/lib/demo-voice.mjs`), or static `scripts/build-demo-video.sh`
+**Demo assets (after deploy):** https://house-pot.onrender.com/cover.jpg · https://house-pot.onrender.com/demo.mp4
+
+| Command | Purpose |
+| --- | --- |
+| `npm run demo:record` | Playwright tour + ElevenLabs voiceover → `public/demo.mp4` (includes **Sponsor integrations** chapter) |
+| `BASE_URL=https://house-pot.onrender.com npm run demo:screenshots` | Capture kitchen + all 18 integration cards + history PNGs → `public/demo-screenshots/` |
+| `npm run demo:splice-screenshots` | Append screenshot slideshow to existing `demo.mp4` |
+| `npm run demo:remix` | Rebuild audio from `.data/demo-timeline.json` without re-recording |
+
+Voice scripts: `scripts/lib/demo-voice.mjs` (male Bangladesh-style tour chapters).
 
 ---
 

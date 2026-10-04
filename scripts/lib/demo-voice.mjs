@@ -23,6 +23,11 @@ export const TOUR_CHAPTERS = [
       "Technology: integration health probes. Where: the status strip under the header, backed by GET slash api slash health. How used: before you demo, confirm Gemma, MongoDB, and ElevenLabs show live; optional flags cover Temporal, embeddings, SerpApi, and Mastra when configured.",
   },
   {
+    id: "integrations",
+    text:
+      "Technology: sponsor integration dashboard. Where: Sponsor integrations at the bottom of the kitchen page, backed by GET slash api slash integrations. How used: local probes only—nothing is submitted from this panel. You see live or off for Gemma open weights, MongoDB Atlas, Backboard memory, ElevenLabs TTS and Scribe, Whisper, SerpApi, Mastra approval workflow, TabPFN friend-fit, Tiger Data Postgres mirror, Temporal, Sentry agent tracing, Ollama embeddings, TheMealDB, Open Food Facts, Render deploy, DigitalOcean app spec, GitHub Actions CI, and Entire JSON export per run. On Render, thirteen of eighteen probes are typically live; Temporal and Whisper stay local.",
+  },
+  {
     id: "mongodb_profile",
     text:
       "Technology: MongoDB Atlas. Where: household documents in the house underscore pot database, via store dot TypeScript with a local JSON fallback. How used: cook name, allergies, dislikes, and diners post to slash api slash household; that id is saved in the browser and loaded on every propose.",
