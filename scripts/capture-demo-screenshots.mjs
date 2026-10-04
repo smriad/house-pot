@@ -41,9 +41,11 @@ try {
   console.log("Capturing", BASE, "→", outDir);
 
   await page.goto(BASE, { waitUntil: "networkidle", timeout: 120_000 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(400);
   await shot(page, "01-kitchen-top");
 
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight * 0.35));
+  await page.getByText("Pantry & voice notes", { exact: true }).scrollIntoViewIfNeeded();
   await page.waitForTimeout(500);
   await shot(page, "02-kitchen-form");
 
@@ -61,8 +63,17 @@ try {
   await page.waitForTimeout(2500);
 
   const panel = page.locator("section").filter({ hasText: "Sponsor integrations" });
+  await panel.scrollIntoViewIfNeeded();
+  await page.evaluate(() => {
+    const el = [...document.querySelectorAll("section")].find((s) =>
+      s.textContent?.includes("Sponsor integrations"),
+    );
+    el?.scrollIntoView({ block: "start" });
+    window.scrollBy(0, -8);
+  });
+  await page.waitForTimeout(600);
   const integrationsFile = path.join(outDir, "03-integrations-dashboard.png");
-  await panel.screenshot({ path: integrationsFile });
+  await page.screenshot({ path: integrationsFile });
   console.log("  wrote", integrationsFile);
 
   const legacyHeader = path.join(outDir, "04-integrations-header.png");

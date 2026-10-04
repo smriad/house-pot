@@ -64,6 +64,60 @@ export const TOUR_CHAPTERS = [
   },
 ];
 
+/** One voice line per demo-screenshots PNG (kitchen → integrations → history). */
+export const SLIDESHOW_CHAPTERS = [
+  {
+    id: "kitchen",
+    text:
+      "House Pot is a Next.js kitchen for Dhaka. Cooks propose dinner from pantry text, with household allergies stored in MongoDB Atlas.",
+  },
+  {
+    id: "form",
+    text:
+      "Pick the cook, diners, and allergies, then type or dictate pantry items. Speech is for planning only—ElevenLabs reads aloud only after approve.",
+  },
+  {
+    id: "integrations",
+    text:
+      "Sponsor integrations is a live probe grid: Gemma, MongoDB, ElevenLabs, Mastra, Render, GitHub Actions, and the rest of the stack. Local checks only—nothing is submitted from this panel.",
+  },
+  {
+    id: "history_all",
+    text:
+      "Pot history lists every run—recipe title, approval status, and narration—so judges can verify approve-first flow on the live URL.",
+  },
+  {
+    id: "history_household",
+    text:
+      "Per-household history shows Amma's narrated pots and feedback like less cumin, which MongoDB remembers for the next night.",
+  },
+];
+
+export async function synthesizeSlideshowVoices(outDir) {
+  loadEnvLocal();
+  const key = process.env.ELEVENLABS_API_KEY?.trim();
+  if (!key) {
+    throw new Error("ELEVENLABS_API_KEY missing — add to .env.local for slideshow voiceover");
+  }
+  fs.mkdirSync(outDir, { recursive: true });
+  const client = new ElevenLabsClient({ apiKey: key });
+  const voiceId = demoVoiceId();
+  console.log("Demo voice id:", voiceId);
+
+  const files = {};
+  for (const chapter of SLIDESHOW_CHAPTERS) {
+    const dest = path.join(outDir, `${chapter.id}.mp3`);
+    if (fs.existsSync(dest) && process.env.DEMO_REUSE_VOICE !== "0") {
+      files[chapter.id] = dest;
+      continue;
+    }
+    console.log("Voice:", chapter.id);
+    await synthesizeText(client, voiceId, chapter.text, dest);
+    files[chapter.id] = dest;
+  }
+  return files;
+}
+
 export function demoVoiceId() {
   return (
     process.env.DEMO_ELEVENLABS_VOICE_ID?.trim() ||

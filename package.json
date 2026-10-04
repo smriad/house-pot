@@ -19,7 +19,8 @@
     "demo:record": "node scripts/record-demo.mjs",
     "demo:remix": "node scripts/remix-demo.mjs",
     "demo:screenshots": "node scripts/capture-demo-screenshots.mjs",
-    "demo:splice-screenshots": "node scripts/splice-screenshots-into-demo.mjs"
+    "demo:splice-screenshots": "node scripts/splice-screenshots-into-demo.mjs",
+    "demo:from-screenshots": "node scripts/build-demo-from-screenshots.mjs"
   },
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.70.0",

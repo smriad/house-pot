@@ -67,9 +67,9 @@ Same repo locally and live: my laptop runs Whisper, TabPFN, Temporal, Backboard/
 
 <video src="https://house-pot.onrender.com/demo.mp4" controls width="100%" title="House Pot demo — technology tour and approved recipe narration"></video>
 
-[~6 min tour + screenshot reel](https://house-pot.onrender.com/demo.mp4) · [Amma narrated run](https://house-pot.onrender.com/?run=bdb0308d-d198-4ef1-891f-bad4dc7aa50b) · [all pots](https://house-pot.onrender.com/history/all)
+[~50s voiced UI slideshow](https://house-pot.onrender.com/demo.mp4) (kitchen → integrations → history, ElevenLabs narration) · [Amma narrated run](https://house-pot.onrender.com/?run=bdb0308d-d198-4ef1-891f-bad4dc7aa50b) · [all pots](https://house-pot.onrender.com/history/all)
 
-The video can end with a **screenshot slideshow** (kitchen, integrations dashboard, history). Regenerate: `npm run demo:screenshots` then `npm run demo:splice-screenshots` (or full `npm run demo:record` with the integrations chapter).
+Regenerate: `npm run demo:screenshots` then `npm run demo:from-screenshots` (needs `ELEVENLABS_API_KEY` in `.env.local`; optional Playwright tour: `npm run demo:record`).
 
 <details>
 <summary>Sponsor integrations (live screenshots)</summary>
@@ -88,7 +88,7 @@ More PNGs in [public/demo-screenshots](https://github.com/smriad/house-pot/tree/
 
 https://github.com/smriad/house-pot — `pantry-check.ts`, `orchestrator.ts`, `propose-rank.ts`, `meal-fit-features.ts`, `gemma/pantry-extract.ts`, `store.ts`, `HousePotApp.tsx`, `render.yaml`.
 
-**Stack in one line:** Gemma plans (optional rank) · code enforces pantry + allergens · MongoDB remembers + training export · ElevenLabs after approve · `/history/all` for judges · `demo.mp4` via Playwright.
+**Stack in one line:** Gemma plans (optional rank) · code enforces pantry + allergens · MongoDB remembers + training export · ElevenLabs after approve · `/history/all` for judges · `demo.mp4` from live screenshots.
 
 ## Why Does Open Innovation Matter?
 
