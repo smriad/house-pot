@@ -1,4 +1,5 @@
 import { execFile, spawn } from "child_process";
+import path from "path";
 import { promisify } from "util";
 import type { Household, Recipe } from "@/lib/types";
 
@@ -14,7 +15,7 @@ function pythonBin(): string {
 
 function runPythonWithStdin(script: string, stdin: string, timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn(pythonBin(), [script], {
+    const child = spawn(/* turbopackIgnore: true */ pythonBin(), [script], {
       env: { ...process.env, PYTHONUNBUFFERED: "1" },
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -115,7 +116,7 @@ export async function predictMealFit(
     memory_positive: /loved|again|favorite|perfect/i.test(memoryText) ? 1 : 0,
   };
 
-  const script = `${process.cwd()}/scripts/tabpfn_score.py`;
+  const script = path.join(process.cwd(), "scripts", "tabpfn_score.py");
   try {
     const stdout = await runPythonWithStdin(
       script,

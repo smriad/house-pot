@@ -11,10 +11,7 @@ async function main() {
   const address = process.env.TEMPORAL_ADDRESS?.trim() || "localhost:7233";
   let connection: NativeConnection;
   try {
-    connection = await NativeConnection.connect({
-      address,
-      connectTimeout: 5000,
-    });
+    connection = await NativeConnection.connect({ address });
   } catch {
     console.error(
       `Cannot reach Temporal at ${address} (connection refused).\n` +

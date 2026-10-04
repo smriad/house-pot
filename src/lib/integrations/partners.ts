@@ -10,18 +10,20 @@ export type PartnerDeployStatus = {
 
 export async function getPartnerDeployStatus(): Promise<PartnerDeployStatus> {
   const root = process.cwd();
-  const exists = async (rel: string) => {
+  const exists = async (filePath: string) => {
     try {
-      await fs.access(path.join(root, rel));
+      await fs.access(filePath);
       return true;
     } catch {
       return false;
     }
   };
   return {
-    render: await exists("render.yaml"),
-    digitalOcean: await exists(".do/app.yaml"),
-    githubActions: await exists(".github/workflows/house-pot.yml"),
+    render: await exists(path.join(root, "render.yaml")),
+    digitalOcean: await exists(path.join(root, ".do", "app.yaml")),
+    githubActions: await exists(
+      path.join(root, ".github", "workflows", "house-pot.yml"),
+    ),
     entireExport: true,
   };
 }
