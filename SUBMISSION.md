@@ -79,7 +79,7 @@ Open-weight Gemma can plan on a machine we run. Validation stays in our repo. Th
 
 ## My Agent Session
 
-Two public sessions on DEV, oldest first.
+Three public sessions on DEV, oldest first.
 
 ### Demo video, tech voiceover, and DEV submission sync
 
@@ -92,6 +92,12 @@ Two public sessions on DEV, oldest first.
 {% agent_session 432 %}
 
 [Session 432](https://dev.to/agent_sessions/house-pot-full-hf26-build-log-demo-ml-submission-sync-eezqug) — 22 curated turns.
+
+### Submission polish, shrimp-slip gate, eggplant curry demo
+
+{% agent_session 443 %}
+
+[Session 443](https://dev.to/agent_sessions/house-pot-submission-polish-shrimp-slip-gate-eggplant-curry-demo-3iotrv) — 8 curated turns (Amma-led post, `slipIngredient` demo, six-slide `demo.mp4`). **Make Public** on DEV if the embed is blank.
 
 ## Prize Categories
 
