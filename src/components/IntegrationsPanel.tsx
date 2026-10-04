@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type IntegrationStatus = {
   gemma: { configured: boolean; live: boolean };
@@ -126,11 +126,11 @@ function rowsFromStatus(s: IntegrationStatus): Row[] {
       track: "Temporal",
       ok: s.temporal.reachable,
       detail: s.temporal.reachable
-        ? "Durable narration worker"
+        ? "Durable narration worker (local)"
         : s.temporal.configured
-          ? "Start docker + worker"
-          : "Optional",
-      hint: "npm run temporal:up",
+          ? "Start docker + worker on your machine"
+          : "Optional — not deployed on Render",
+      hint: "Local: npm run temporal:up · UI http://localhost:8233",
     },
     {
       name: "Sentry",
@@ -193,10 +193,21 @@ function rowsFromStatus(s: IntegrationStatus): Row[] {
   ];
 }
 
+function isLocalDevHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const h = window.location.hostname;
+  return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
+}
+
 export default function IntegrationsPanel() {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
   const [loading, setLoading] = useState(false);
+  const [localDev, setLocalDev] = useState(false);
+
+  useEffect(() => {
+    setLocalDev(isLocalDevHost());
+  }, []);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -280,14 +291,20 @@ export default function IntegrationsPanel() {
             >
               {loading ? "Refreshing…" : "Refresh probes"}
             </button>
-            <a
-              href="http://localhost:8233"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full border border-[#F2F2EB]/30 px-4 py-2 text-xs"
-            >
-              Temporal UI :8233
-            </a>
+            {localDev ? (
+              <a
+                href="http://localhost:8233"
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border border-[#F2F2EB]/30 px-4 py-2 text-xs"
+              >
+                Open Temporal UI (localhost:8233)
+              </a>
+            ) : (
+              <span className="rounded-full border border-[#F2F2EB]/20 px-4 py-2 text-xs text-hp-cream/70">
+                Temporal UI is local-only (docker on :8233), not on this server
+              </span>
+            )}
           </div>
         </div>
       )}
