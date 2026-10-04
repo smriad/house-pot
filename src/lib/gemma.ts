@@ -30,6 +30,40 @@ function client(): OpenAI {
   });
 }
 
+/**
+ * Some hosted Gemma endpoints (AI Studio Gemma 3) reject system messages and
+ * JSON mode, so fall back to one user message with no response_format.
+ */
+async function chatJson(
+  model: string,
+  system: string,
+  user: string,
+  temperature: number,
+): Promise<string | null | undefined> {
+  const openai = client();
+  try {
+    const completion = await openai.chat.completions.create({
+      model,
+      temperature,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    });
+    return completion.choices[0]?.message?.content;
+  } catch (err) {
+    const status = (err as { status?: number }).status;
+    if (status !== 400 && status !== 422) throw err;
+    const completion = await openai.chat.completions.create({
+      model,
+      temperature,
+      messages: [{ role: "user", content: `${system}\n\n${user}` }],
+    });
+    return completion.choices[0]?.message?.content;
+  }
+}
+
 export async function probeGemma(): Promise<boolean> {
   const openai = client();
   const model = process.env.GEMMA_MODEL?.trim() || "gemma3:4b";
@@ -70,7 +104,6 @@ export async function proposeRecipe(params: {
   }
 
   const model = process.env.GEMMA_MODEL?.trim() || "gemma3:4b";
-  const openai = client();
 
   const styleLine = params.styleHint
     ? `Style for this draft: ${params.styleHint}.`
@@ -107,17 +140,7 @@ openSourceRationale must explain why a local open-weight model is appropriate (p
   let lastError: unknown;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const completion = await openai.chat.completions.create({
-        model,
-        temperature: 0.35,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
-      });
-
-      const raw = completion.choices[0]?.message?.content;
+      const raw = await chatJson(model, system, user, 0.35);
       if (!raw) throw new Error("Gemma returned an empty response");
 
       const parsed = recipeSchema.parse(JSON.parse(extractRecipeJsonText(raw)));
@@ -139,30 +162,10 @@ export function gemmaModelName(): string {
 
 /** Second-pass chat. Returns null when the endpoint is down so the cook still gets the first draft. */
 export async function kitchenChat(system: string, user: string): Promise<string | null> {
-  const model = gemmaModelName();
-  const messages = [
-    { role: "system" as const, content: system },
-    { role: "user" as const, content: user },
-  ];
   try {
-    const completion = await client().chat.completions.create({
-      model,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages,
-    });
-    return completion.choices[0]?.message?.content ?? null;
+    return (await chatJson(gemmaModelName(), system, user, 0.2)) ?? null;
   } catch {
-    try {
-      const completion = await client().chat.completions.create({
-        model,
-        temperature: 0.2,
-        messages,
-      });
-      return completion.choices[0]?.message?.content ?? null;
-    } catch {
-      return null;
-    }
+    return null;
   }
 }
 
