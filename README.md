@@ -294,7 +294,7 @@ Use the in-app **Sponsor integrations** panel or `GET /api/health` on each envir
 | Command | Purpose |
 | --- | --- |
 | `npm run demo:record` | Playwright tour + ElevenLabs voiceover → `public/demo.mp4` (includes **Sponsor integrations** chapter) |
-| `BASE_URL=https://house-pot.onrender.com npm run demo:screenshots` | Capture kitchen + all 17 integration cards + history PNGs → `public/demo-screenshots/` |
+| `BASE_URL=https://house-pot.onrender.com npm run demo:screenshots` | Kitchen + one integrations dashboard PNG + history → `public/demo-screenshots/` |
 | `npm run demo:splice-screenshots` | Append screenshot slideshow to existing `demo.mp4` |
 | `npm run demo:remix` | Rebuild audio from `.data/demo-timeline.json` without re-recording |
 

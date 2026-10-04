@@ -17,6 +17,13 @@ const VIEW_H = parseInt(process.env.DEMO_VIEWPORT_HEIGHT ?? "1080", 10) || 1080;
 
 fs.mkdirSync(outDir, { recursive: true });
 
+/** Drop stale per-card integration captures from older script versions. */
+for (const f of fs.readdirSync(outDir)) {
+  if (f.startsWith("05-integration-") || f === "03-integrations-collapsed.png") {
+    fs.unlinkSync(path.join(outDir, f));
+  }
+}
+
 async function shot(page, name) {
   const file = path.join(outDir, `${name}.png`);
   await page.screenshot({ path: file, fullPage: false });
@@ -40,10 +47,6 @@ try {
   await page.waitForTimeout(500);
   await shot(page, "02-kitchen-form");
 
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await page.waitForTimeout(300);
-  await shot(page, "03-integrations-collapsed");
-
   const showBtn = page.getByRole("button", { name: /Show dashboard/i });
   await showBtn.scrollIntoViewIfNeeded();
   await showBtn.click({ timeout: 15_000 });
@@ -57,42 +60,30 @@ try {
     .catch(() => undefined);
   await page.waitForTimeout(2500);
 
-  await shot(page, "04-integrations-header");
-
   const panel = page.locator("section").filter({ hasText: "Sponsor integrations" });
-  const cards = panel.locator("div.rounded-2xl.border-2");
-  const n = await cards.count();
-  console.log("  integration cards:", n);
+  const integrationsFile = path.join(outDir, "03-integrations-dashboard.png");
+  await panel.screenshot({ path: integrationsFile });
+  console.log("  wrote", integrationsFile);
 
-  for (let i = 0; i < n; i++) {
-    const card = cards.nth(i);
-    await card.scrollIntoViewIfNeeded();
-    await page.evaluate(() => window.scrollBy(0, -40));
-    await page.waitForTimeout(250);
-    const label =
-      (await card.locator("p.text-sm.font-medium").first().textContent())?.trim() ||
-      `card-${i}`;
-    const safe = label
-      .replace(/[^a-z0-9]+/gi, "-")
-      .replace(/^-|-$/g, "")
-      .toLowerCase();
-    await shot(
-      page,
-      `05-integration-${String(i + 1).padStart(2, "0")}-${safe.slice(0, 40)}`,
-    );
-  }
+  const legacyHeader = path.join(outDir, "04-integrations-header.png");
+  if (fs.existsSync(legacyHeader)) fs.unlinkSync(legacyHeader);
 
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.goto(`${BASE}/history/all`, { waitUntil: "networkidle", timeout: 120_000 });
   await page.waitForTimeout(1500);
-  await shot(page, "06-history-all");
+  await shot(page, "04-history-all");
 
   await page.goto(`${BASE}/history?household=21679f68-19c2-42af-950d-890226540e46`, {
     waitUntil: "networkidle",
     timeout: 120_000,
   });
   await page.waitForTimeout(1500);
-  await shot(page, "07-household-history");
+  await shot(page, "05-household-history");
+
+  const legacyHistory = path.join(outDir, "06-history-all.png");
+  const legacyHousehold = path.join(outDir, "07-household-history.png");
+  if (fs.existsSync(legacyHistory)) fs.unlinkSync(legacyHistory);
+  if (fs.existsSync(legacyHousehold)) fs.unlinkSync(legacyHousehold);
 } finally {
   await browser.close();
 }
