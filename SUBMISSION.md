@@ -59,26 +59,48 @@ sequenceDiagram
   API->>E: TTS approved text only
 ```
 
-Same repo locally and live: my laptop runs Whisper, TabPFN, Temporal, Backboard/Tiger mirrors—see `GET /api/health`. Render turns off heavy Python paths so judges can click without Ollama.
+Same repo locally and live: my laptop runs Whisper, TabPFN, Temporal, Backboard/Tiger mirrors—see `GET /api/health`. Render turns off heavy Python paths so judges can click without Ollama. **Sponsor integrations** (17 probes on the kitchen page) reflects the same stack—Render deploy, not DigitalOcean.
 
 ## Demo
 
 **Live:** https://house-pot.onrender.com/
 
-<video src="https://house-pot.onrender.com/demo.mp4" controls width="100%" title="House Pot demo — technology tour and approved recipe narration"></video>
+<video src="https://house-pot.onrender.com/demo.mp4" controls width="100%" title="House Pot — voiced UI walkthrough (kitchen, integrations, history)"></video>
 
-[~50s voiced UI slideshow](https://house-pot.onrender.com/demo.mp4) (kitchen → integrations → history, ElevenLabs narration) · [Amma narrated run](https://house-pot.onrender.com/?run=bdb0308d-d198-4ef1-891f-bad4dc7aa50b) · [all pots](https://house-pot.onrender.com/history/all)
+**[~50s voiced slideshow](https://house-pot.onrender.com/demo.mp4)** — five live screenshots, ElevenLabs narration (one line per slide):
 
-Regenerate: `npm run demo:screenshots` then `npm run demo:from-screenshots` (needs `ELEVENLABS_API_KEY` in `.env.local`; optional Playwright tour: `npm run demo:record`).
+| Slide | File | What you see |
+| --- | --- | --- |
+| 1 | `01-kitchen-top.png` | Kitchen hero |
+| 2 | `02-kitchen-form.png` | Cook profile, pantry, speech/record |
+| 3 | `03-integrations-dashboard.png` | Sponsor integrations probe grid |
+| 4 | `04-history-all.png` | All pots |
+| 5 | `05-household-history.png` | Amma household history |
+
+Also try: [Amma narrated run](https://house-pot.onrender.com/?run=bdb0308d-d198-4ef1-891f-bad4dc7aa50b) · [all pots](https://house-pot.onrender.com/history/all)
+
+**Regenerate and ship:**
+
+```bash
+BASE_URL=https://house-pot.onrender.com npm run demo:screenshots
+DEMO_REUSE_VOICE=0 npm run demo:from-screenshots   # ELEVENLABS_API_KEY in .env.local
+# commit public/demo.mp4 + public/demo-screenshots/ → deploy Render
+```
+
+Optional longer tour (kitchen + approve + recipe audio): `DEMO_REUSE_VOICE=0 BASE_URL=https://house-pot.onrender.com npm run demo:record`.
 
 <details>
-<summary>Sponsor integrations (live screenshots)</summary>
+<summary>Screenshot stills (same order as the video)</summary>
 
-![Kitchen](https://house-pot.onrender.com/demo-screenshots/01-kitchen-top.png)
+![Kitchen hero](https://house-pot.onrender.com/demo-screenshots/01-kitchen-top.png)
+
+![Kitchen form](https://house-pot.onrender.com/demo-screenshots/02-kitchen-form.png)
 
 ![Integrations dashboard](https://house-pot.onrender.com/demo-screenshots/03-integrations-dashboard.png)
 
-More PNGs in [public/demo-screenshots](https://github.com/smriad/house-pot/tree/main/public/demo-screenshots).
+![All pot history](https://house-pot.onrender.com/demo-screenshots/04-history-all.png)
+
+![Amma household history](https://house-pot.onrender.com/demo-screenshots/05-household-history.png)
 
 </details>
 
@@ -86,9 +108,9 @@ More PNGs in [public/demo-screenshots](https://github.com/smriad/house-pot/tree/
 
 ## Code
 
-https://github.com/smriad/house-pot — `pantry-check.ts`, `orchestrator.ts`, `propose-rank.ts`, `meal-fit-features.ts`, `gemma/pantry-extract.ts`, `store.ts`, `HousePotApp.tsx`, `render.yaml`.
+https://github.com/smriad/house-pot — `pantry-check.ts`, `orchestrator.ts`, `propose-rank.ts`, `meal-fit-features.ts`, `gemma/pantry-extract.ts`, `store.ts`, `HousePotApp.tsx`, `IntegrationsPanel.tsx`, `render.yaml`.
 
-**Stack in one line:** Gemma plans (optional rank) · code enforces pantry + allergens · MongoDB remembers + training export · ElevenLabs after approve · `/history/all` for judges · `demo.mp4` from live screenshots.
+**Stack in one line:** Gemma plans (optional rank) · code enforces pantry + allergens · MongoDB remembers + training export · ElevenLabs after approve · `/history/all` for judges · voiced `demo.mp4` from live screenshots.
 
 ## Why Does Open Innovation Matter?
 
@@ -101,7 +123,7 @@ Open-weight **Gemma** can plan on a machine we run; validation stays ours. The R
 ## Prize Categories
 
 - **Best Use of Gemma** — one pantry-constrained JSON recipe per night.
-- **Best Use of ElevenLabs** — narration only after approve.
+- **Best Use of ElevenLabs** — narration only after approve (demo video + recipe TTS).
 - **Best Use of MongoDB Atlas** — household memory + `meal_fit_training` feedback rows on the live URL.
 - **Best Use of Render** — https://house-pot.onrender.com/ from `render.yaml`.
 

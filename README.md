@@ -289,17 +289,32 @@ TABPFN_DISABLE=true
 
 Use the in-app **Sponsor integrations** panel or `GET /api/health` on each environment to see which probes are `live`.
 
-**Demo assets (after deploy):** https://house-pot.onrender.com/cover.jpg · https://house-pot.onrender.com/demo.mp4
+**Demo assets (after deploy):** https://house-pot.onrender.com/cover.jpg · https://house-pot.onrender.com/demo.mp4 · https://house-pot.onrender.com/demo-screenshots/
+
+**Recommended judge video (~50s, voiced):** capture five live PNGs, then mux with ElevenLabs narration (one voice line per slide).
+
+```bash
+BASE_URL=https://house-pot.onrender.com npm run demo:screenshots
+DEMO_REUSE_VOICE=0 npm run demo:from-screenshots   # needs ELEVENLABS_API_KEY in .env.local
+```
+
+| PNG | What it shows |
+| --- | --- |
+| `01-kitchen-top.png` | Kitchen hero |
+| `02-kitchen-form.png` | Cook profile, pantry textarea, record/speech |
+| `03-integrations-dashboard.png` | **Sponsor integrations** probe grid (full viewport) |
+| `04-history-all.png` | All pots (`/history/all`) |
+| `05-household-history.png` | Amma household history |
 
 | Command | Purpose |
 | --- | --- |
-| `npm run demo:record` | Playwright tour + ElevenLabs voiceover → `public/demo.mp4` (includes **Sponsor integrations** chapter) |
-| `BASE_URL=https://house-pot.onrender.com npm run demo:screenshots` | Kitchen + one integrations dashboard PNG + history → `public/demo-screenshots/` |
-| `npm run demo:from-screenshots` | Build `public/demo.mp4` from `demo-screenshots/` + ElevenLabs narration (`.env.local`) |
-| `npm run demo:splice-screenshots` | Append screenshot slideshow to existing `demo.mp4` |
-| `npm run demo:remix` | Rebuild audio from `.data/demo-timeline.json` without re-recording |
+| `npm run demo:screenshots` | Playwright capture → `public/demo-screenshots/` (set `BASE_URL` for live) |
+| `npm run demo:from-screenshots` | **Primary:** `public/demo.mp4` from those PNGs + `SLIDESHOW_CHAPTERS` voice (`DEMO_SCREENSHOT_SEC`, default 2.5s min per slide; hold extends to fit narration) |
+| `npm run demo:record` | Optional ~6 min Playwright tour + full `TOUR_CHAPTERS` voiceover (kitchen flow + narrated recipe) |
+| `npm run demo:splice-screenshots` | Append `demo-screenshots/*.png` reel to an existing tour `demo.mp4` |
+| `npm run demo:remix` | Rebuild tour audio from `.data/demo-timeline.json` without re-recording |
 
-Voice scripts: `scripts/lib/demo-voice.mjs` (male Bangladesh-style tour chapters).
+Voice scripts: `scripts/lib/demo-voice.mjs` — `SLIDESHOW_CHAPTERS` (5 slides) and `TOUR_CHAPTERS` (long tour). Scripts: `capture-demo-screenshots.mjs`, `build-demo-from-screenshots.mjs`.
 
 ---
 
@@ -357,14 +372,14 @@ Agent steps are wrapped with Sentry spans (`withAgentSpan`) when `SENTRY_DSN` is
 
 ## Technologies — how and why
 
-Tables below match what we **actually run**: **`live` on local dev** (`npm run dev` → `GET /api/health`) and what is **live on Render** today. **SerpApi** is not configured (no key). Other sponsor hooks exist in the repo for probes only.
+Tables below match what we **actually run**: **`live` on local dev** (`npm run dev` → `GET /api/health`) and what is **live on Render** today. **SerpApi** is not configured on production (no key). The in-app **Sponsor integrations** panel runs **17** local probes (deploy: Render, GitHub Actions, Entire export—no DigitalOcean path).
 
 | Environment | Live integrations (summary) |
 | --- | --- |
 | **Local dev** | Gemma (Ollama), embeddings, Whisper, ElevenLabs, MongoDB, Mastra, Temporal, Backboard, Tiger, TabPFN, Sentry, TheMealDB, Open Food Facts |
 | **[Render](https://house-pot.onrender.com/api/health)** | Gemma, MongoDB, ElevenLabs, Mastra, Backboard, Tiger, Sentry, TheMealDB, Open Food Facts — Whisper, Temporal, embeddings, TabPFN, SerpApi **off** by design |
 
-Hacktoberfest narrative and prize framing: [`SUBMISSION.md`](./SUBMISSION.md#technologies--what-i-used-how-and-why). **Sponsor integrations** panel in the app mirrors the same probes.
+Hacktoberfest narrative and prize framing: [`SUBMISSION.md`](./SUBMISSION.md). **Sponsor integrations** mirrors the same probes as `GET /api/integrations`.
 
 ### Core application
 
@@ -435,9 +450,9 @@ Hacktoberfest narrative and prize framing: [`SUBMISSION.md`](./SUBMISSION.md#tec
 
 | Technology | How it's used | Why |
 | --- | --- | --- |
-| **Render** | `render.yaml` | Public demo |
-| **GitHub Actions** | `live-smoke.yml` | CI on production propose path |
-| **Playwright** | `npm run demo:record` → `demo.mp4` | Judge-friendly video |
+| **Render** | `render.yaml` | Public demo (`demo.mp4` + `demo-screenshots/` served as static files) |
+| **GitHub Actions** | `house-pot.yml`, `live-smoke.yml` | Build, lint, production smoke |
+| **Playwright + ffmpeg** | `demo:screenshots` + `demo:from-screenshots` | Voiced slideshow for judges; optional `demo:record` for full kitchen tour |
 | **Docker Compose** | `docker-compose.temporal.yml` | Local Temporal only |
 
 **Design line:** plan (Gemma) → policy (`pantry-check`) → deliver (ElevenLabs, gated).
@@ -458,7 +473,8 @@ src/
     mastra/          Approval workflow
     durable/         Idempotent narration steps
     temporal/        Optional durable narration worker
-scripts/             seed-live-samples, prune-live-db, export-meal-fit-training, demo record, temporal-worker
+scripts/             demo screenshots/slideshow, seed/prune live DB, export training, temporal-worker
+public/              demo.mp4, demo-screenshots/, cover.jpg
 .github/workflows/   house-pot.yml, live-smoke.yml
 render.yaml          Render Blueprint (free web service)
 Dockerfile           Node + Python + Whisper (full-stack hosts)
@@ -650,10 +666,15 @@ MongoDB database: **`house_pot`**. If `MONGODB_URI` is set but the cluster is un
 | **Live** | `live-smoke.yml` + `smoke:prod` → production `/api/health` |
 | **Manual** | Propose → inspect marks → approve → narrate (allow 60–120s on Render) |
 
-Recommended pre-release checklist: health shows `gemma` + `mongodb` + `elevenlabs` live; one full run with Amma defaults; DEV post links to `demo.mp4` and live URL.
+Recommended pre-release checklist: health shows `gemma` + `mongodb` + `elevenlabs` live; one full run with Amma defaults; refresh `demo-screenshots` + `demo.mp4` (`demo:screenshots` → `demo:from-screenshots`); commit static assets; [`SUBMISSION.md`](./SUBMISSION.md) and DEV post link to live URL + `demo.mp4`.
 
 ---
 
-## License
+## License & community
 
-MIT
+| Document | Purpose |
+| --- | --- |
+| [LICENSE](./LICENSE) | MIT |
+| [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) | Community standards |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute |
+| [.github/SECURITY.md](./.github/SECURITY.md) | Report vulnerabilities privately |
