@@ -5,7 +5,7 @@ dev_url: https://dev.to/smriad/house-pot-ammas-kitchen-in-dhaka-approve-first-th
 tags: devchallenge, weekendchallenge, hf26challenge
 ---
 
-*Submission for [Hacktoberfest Weekend: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)* — `#hf26challenge`
+*This is a submission for the [Hacktoberfest Weekend Challenge: Build for a Friend](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)*
 
 > “The dal was right—use a little less cumin next time. And I will not listen to the voice until I tap approve.”
 > — Amma
@@ -38,9 +38,28 @@ The live narrated card is **Mild Eggplant and Potato Comfort Curry** — Sunday-
 
 <video src="https://house-pot.onrender.com/demo.mp4" controls width="100%" title="House Pot — kitchen walkthrough"></video>
 
+<details>
+<summary>Live stills (same order as the video)</summary>
+
+![Kitchen hero](https://house-pot.onrender.com/demo-screenshots/01-kitchen-top.png)
+
+![Sunday-market pantry](https://house-pot.onrender.com/demo-screenshots/02-kitchen-form.png)
+
+![Shrimp-slip gate + ElevenLabs](https://house-pot.onrender.com/demo-screenshots/03-approved-recipe.png)
+
+![Kitchen services](https://house-pot.onrender.com/demo-screenshots/04-integrations-dashboard.png)
+
+![All pots](https://house-pot.onrender.com/demo-screenshots/05-history-all.png)
+
+![Amma household history](https://house-pot.onrender.com/demo-screenshots/06-household-history.png)
+
+</details>
+
 ## Code
 
-https://github.com/smriad/house-pot — start at `pantry-check.ts`, then `orchestrator.ts`, `approve/route.ts`, `narrate/route.ts`, `HousePotApp.tsx`.
+{% embed https://github.com/smriad/house-pot %}
+
+Start at `pantry-check.ts`, then `orchestrator.ts`, `approve/route.ts`, `narrate/route.ts`, `HousePotApp.tsx`.
 
 ## How I Built It
 
@@ -58,16 +77,9 @@ In this kitchen the sensitive data is not “inspiration.” It is **who reacts 
 
 Open-weight Gemma can plan on a machine we run. Validation stays in our repo. The Render demo is hosted so you can try it — the policy layer is still the TypeScript you can read. Swapping the planner is an env var; swapping the allergen rules is a pull request.
 
-## Prize Categories
+## My Agent Session
 
-- **Best Use of ElevenLabs** — TTS only after approve; pantry audio never sent; the live “If shrimp slipped in” path never reaches TTS.
-- **Best Use of Gemma** — one pantry-constrained JSON recipe, optional critic, never the safety authority.
-- **Best Use of MongoDB Atlas** — household + runs + cook feedback (`meal_fit_training`) on the live URL.
-- **Best Use of Render** — https://house-pot.onrender.com/ from `render.yaml`.
-
-## My Agent Sessions
-
-Public on DEV, oldest first. Both embeds are live.
+Two public sessions on DEV, oldest first.
 
 ### Demo video, tech voiceover, and DEV submission sync
 
@@ -80,6 +92,13 @@ Public on DEV, oldest first. Both embeds are live.
 {% agent_session 432 %}
 
 [Session 432](https://dev.to/agent_sessions/house-pot-full-hf26-build-log-demo-ml-submission-sync-eezqug) — 22 curated turns.
+
+## Prize Categories
+
+- **Best Use of ElevenLabs** — TTS only after approve; pantry audio never sent; the live “If shrimp slipped in” path never reaches TTS.
+- **Best Use of Gemma** — one pantry-constrained JSON recipe, optional critic, never the safety authority.
+- **Best Use of MongoDB Atlas** — household + runs + cook feedback (`meal_fit_training`) on the live URL.
+- **Best Use of Render** — https://house-pot.onrender.com/ from `render.yaml`.
 
 ---
 
