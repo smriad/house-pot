@@ -64,7 +64,7 @@ Same repo locally and live: my laptop runs Whisper, TabPFN, Temporal, Backboard/
 
 <video src="https://house-pot.onrender.com/demo.mp4" controls width="100%" title="House Pot demo — technology tour and approved recipe narration"></video>
 
-[~5 min tour](https://house-pot.onrender.com/demo.mp4) · [example narrated run](https://house-pot.onrender.com/?run=bc1c4411-5d4b-42a3-ab04-97b0346b53ea) · [run history](https://house-pot.onrender.com/history?household=8c596887-5372-4c81-bd95-8ec1babe627b)
+[~5 min tour](https://house-pot.onrender.com/demo.mp4) · [Amma narrated run](https://house-pot.onrender.com/?run=bdb0308d-d198-4ef1-891f-bad4dc7aa50b) · [all pots (3)](https://house-pot.onrender.com/history/all)
 
 **Judges:** open the live URL (cold start on free tier ~60s). Keep **Amma**, allergies **peanuts, shellfish**, the pantry line above, tap **Propose tonight's pot**, then **Approve & read aloud** only when marks look safe. Disabled approve shows why—that is the product.
 

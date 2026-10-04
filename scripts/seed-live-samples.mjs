@@ -2,7 +2,14 @@
 /**
  * Create real propose → approve → narrate runs on production (MongoDB).
  * Usage: PRODUCTION_URL=https://house-pot.onrender.com node scripts/seed-live-samples.mjs
+ * To reset live to 3 narrated samples only: npm run prune:live (then seed if needed).
+ * Set PRUNE_BEFORE_SEED=1 to prune MongoDB before creating new runs.
  */
+import path from "path";
+import { fileURLToPath } from "url";
+
+const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+
 const BASE = (process.env.PRODUCTION_URL ?? "https://house-pot.onrender.com").replace(
   /\/$/,
   "",
@@ -104,6 +111,16 @@ async function seedOne(sample, index) {
 }
 
 async function main() {
+  if (process.env.PRUNE_BEFORE_SEED === "1") {
+    console.log("PRUNE_BEFORE_SEED=1 — keeping only latest narrated Amma/Khalu/Farida in MongoDB…");
+    const { spawnSync } = await import("child_process");
+    const pr = spawnSync("node", ["scripts/prune-live-db.mjs"], {
+      stdio: "inherit",
+      cwd: REPO_ROOT,
+    });
+    if (pr.status !== 0) process.exit(pr.status ?? 1);
+  }
+
   console.log(`Seeding live samples at ${BASE}`);
   const health = await jsonFetch("/api/health");
   console.log(
