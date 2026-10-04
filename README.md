@@ -3,6 +3,7 @@
 Next.js app for a household cook: one recipe from tonight’s pantry, allergies enforced in code, ElevenLabs TTS only after explicit approve. Hacktoberfest “Build for a Friend” write-up: [`SUBMISSION.md`](./SUBMISSION.md).
 
 **Live:** https://house-pot.onrender.com/  
+**Narrated run:** https://house-pot.onrender.com/?run=8073cda3-1865-4542-871b-5cba6afc9b4d (Mild Eggplant and Potato Comfort Curry)  
 **Local:** http://localhost:3000 (`npm run dev`)  
 **Repository:** https://github.com/smriad/house-pot
 
@@ -291,7 +292,7 @@ Use the in-app **Kitchen services** panel or `GET /api/health` on each environme
 
 **Demo assets (after deploy):** https://house-pot.onrender.com/cover.jpg · https://house-pot.onrender.com/demo.mp4 · https://house-pot.onrender.com/demo-screenshots/
 
-**Recommended judge video (~50s, voiced):** capture five live PNGs, then mux with ElevenLabs narration (one voice line per slide).
+**Recommended judge video (voiced slideshow):** capture six live PNGs, then mux with ElevenLabs narration (one voice line per slide).
 
 ```bash
 BASE_URL=https://house-pot.onrender.com npm run demo:screenshots
@@ -300,11 +301,12 @@ DEMO_REUSE_VOICE=0 npm run demo:from-screenshots   # needs ELEVENLABS_API_KEY in
 
 | PNG | What it shows |
 | --- | --- |
-| `01-kitchen-top.png` | Kitchen hero |
-| `02-kitchen-form.png` | Cook profile, pantry textarea, record/speech |
-| `03-integrations-dashboard.png` | **Kitchen services** probe grid (full viewport) |
-| `04-history-all.png` | All pots (`/history/all`) |
-| `05-household-history.png` | Amma household history |
+| `01-kitchen-top.png` | Kitchen hero + live eggplant curry card |
+| `02-kitchen-form.png` | Cook profile, Sunday-market pantry, record/speech |
+| `03-approved-recipe.png` | Shrimp-slip gate + ElevenLabs player on the approved card |
+| `04-integrations-dashboard.png` | **Kitchen services** probe grid (Gemma, MongoDB, ElevenLabs live) |
+| `05-history-all.png` | All pots (`/history/all`) |
+| `06-household-history.png` | Amma household history |
 
 | Command | Purpose |
 | --- | --- |
@@ -314,7 +316,7 @@ DEMO_REUSE_VOICE=0 npm run demo:from-screenshots   # needs ELEVENLABS_API_KEY in
 | `npm run demo:splice-screenshots` | Append `demo-screenshots/*.png` reel to an existing tour `demo.mp4` |
 | `npm run demo:remix` | Rebuild tour audio from `.data/demo-timeline.json` without re-recording |
 
-Voice scripts: `scripts/lib/demo-voice.mjs` — `SLIDESHOW_CHAPTERS` (5 slides) and `TOUR_CHAPTERS` (long tour). Scripts: `capture-demo-screenshots.mjs`, `build-demo-from-screenshots.mjs`.
+Voice scripts: `scripts/lib/demo-voice.mjs` — `SLIDESHOW_CHAPTERS` (6 slides) and `TOUR_CHAPTERS` (long tour). Scripts: `capture-demo-screenshots.mjs`, `build-demo-from-screenshots.mjs`.
 
 ---
 
@@ -667,6 +669,17 @@ MongoDB database: **`house_pot`**. If `MONGODB_URI` is set but the cluster is un
 | **Manual** | Propose → inspect marks → approve → narrate (allow 60–120s on Render) |
 
 Recommended pre-release checklist: health shows `gemma` + `mongodb` + `elevenlabs` live; one full run with Amma defaults; refresh `demo-screenshots` + `demo.mp4` (`demo:screenshots` → `demo:from-screenshots`); commit static assets; [`SUBMISSION.md`](./SUBMISSION.md) and DEV post link to live URL + `demo.mp4`.
+
+---
+
+## Agent sessions (DEV)
+
+Liquid embeds belong in [`SUBMISSION.md`](./SUBMISSION.md) and the [DEV post](https://dev.to/smriad/house-pot-ammas-kitchen-in-dhaka-approve-first-then-listen-2mi9) (`{% agent_session ID %}`). GitHub does not render them.
+
+| Session | What it covers |
+| --- | --- |
+| [422](https://dev.to/agent_sessions/house-pot-demo-video-tech-voiceover-and-dev-submission-sync-xuczlj) | Demo video, tech voiceover, DEV submission sync (7 turns) |
+| [432](https://dev.to/agent_sessions/house-pot-full-hf26-build-log-demo-ml-submission-sync-eezqug) | Full HF26 build log — demo, ML, submission sync (22 turns) |
 
 ---
 

@@ -219,6 +219,8 @@ export default function HousePotApp() {
     if (!res.ok) return;
     const data = (await res.json()) as KitchenRun;
     persistRun(data);
+    if (data.pantryText) setPantry(data.pantryText);
+    if (typeof data.diners === "number" && data.diners >= 1) setDiners(data.diners);
   }, [persistRun]);
 
   const refreshRunHistory = useCallback(async (householdId: string) => {
@@ -232,21 +234,22 @@ export default function HousePotApp() {
     const id = localStorage.getItem(STORAGE_KEY);
     void (async () => {
       try {
-        if (!id) return;
-        const hRes = await fetch(`/api/household?id=${encodeURIComponent(id)}`);
-        if (hRes.ok) {
-          const h = (await hRes.json()) as Household;
-          setHousehold(h);
-          setCookName(h.cookName);
-          setAllergies(h.allergies.join(", "));
-          setDislikes(h.dislikes.join(", "));
+        if (id) {
+          const hRes = await fetch(`/api/household?id=${encodeURIComponent(id)}`);
+          if (hRes.ok) {
+            const h = (await hRes.json()) as Household;
+            setHousehold(h);
+            setCookName(h.cookName);
+            setAllergies(h.allergies.join(", "));
+            setDislikes(h.dislikes.join(", "));
+          }
+          const memRes = await fetch(`/api/household/${id}/memories`);
+          if (memRes.ok) {
+            const j = await memRes.json();
+            setPantryMemories(j.memories ?? []);
+          }
+          await refreshRunHistory(id);
         }
-        const memRes = await fetch(`/api/household/${id}/memories`);
-        if (memRes.ok) {
-          const j = await memRes.json();
-          setPantryMemories(j.memories ?? []);
-        }
-        await refreshRunHistory(id);
         const runFromUrl = new URLSearchParams(window.location.search).get("run");
         const lastRunId = runFromUrl ?? localStorage.getItem(RUN_STORAGE_KEY);
         if (lastRunId) await loadRunById(lastRunId);

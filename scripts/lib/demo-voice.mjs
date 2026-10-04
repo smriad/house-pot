@@ -64,32 +64,37 @@ export const TOUR_CHAPTERS = [
   },
 ];
 
-/** One voice line per demo-screenshots PNG (kitchen → integrations → history). */
+/** One voice line per demo-screenshots PNG (kitchen → recipe → services → history). */
 export const SLIDESHOW_CHAPTERS = [
   {
     id: "kitchen",
     text:
-      "House Pot is a Next.js kitchen for Dhaka. Cooks propose dinner from pantry text, with household allergies stored in MongoDB Atlas.",
+      "Amma approves first, then it speaks. House Pot is her Dhaka kitchen: one pot from tonight's pantry, allergies in code, not in a disclaimer.",
   },
   {
     id: "form",
     text:
-      "Pick the cook, diners, and allergies, then type or dictate pantry items. Speech is for planning only—ElevenLabs reads aloud only after approve.",
+      "Sunday market haul: eggplant, potato, eggs, mustard oil, rice. Four diners. Peanuts and shellfish stay blocked. Speech is for the pantry only.",
+  },
+  {
+    id: "recipe",
+    text:
+      "Gemma proposed mild eggplant and potato comfort curry. Every mark is in-kitchen. If shrimp slipped in, pantry-check flags shellfish. Approve stays off. ElevenLabs never runs.",
   },
   {
     id: "integrations",
     text:
-      "Kitchen services is an optional probe grid: Gemma, MongoDB, ElevenLabs, and the rest. Local checks only.",
+      "Kitchen services is an optional probe grid: Gemma, MongoDB, ElevenLabs live on Render. The product is the kitchen above, not this dashboard.",
   },
   {
     id: "history_all",
     text:
-      "Pot history lists every run—recipe title, approval status, and narration—so judges can verify approve-first flow on the live URL.",
+      "All pots lists every propose, approve, and narrate run, so judges can open the live eggplant curry without installing Ollama.",
   },
   {
     id: "history_household",
     text:
-      "Per-household history shows Amma's narrated pots and feedback like less cumin, which MongoDB remembers for the next night.",
+      "Amma's household memory keeps the begun feedback: keep the chili mild, and do not listen until she taps approve.",
   },
 ];
 

@@ -32,7 +32,9 @@ I handed her the dal. She ate it. The quote above is the spec.
 
 **Sixty seconds:** leave the defaults → **Propose tonight’s pot** → read the marks → **Approve & read aloud**. Then tap **If shrimp slipped in**. That last click does not call Gemma or ElevenLabs. It adds shrimp to the same card and runs `pantry-check.ts` so you can see Approve stay off.
 
-[Amma’s narrated run](https://house-pot.onrender.com/?run=bdb0308d-d198-4ef1-891f-bad4dc7aa50b) · [all pots](https://house-pot.onrender.com/history/all) · [video](https://house-pot.onrender.com/demo.mp4)
+The live narrated card is **Mild Eggplant and Potato Comfort Curry** — Sunday-market eggplant, potato, eggs, mustard oil; four diners; peanuts and shellfish blocked. Gemma ~51s, critic ~23s, then ElevenLabs after approve.
+
+[Amma’s narrated run](https://house-pot.onrender.com/?run=8073cda3-1865-4542-871b-5cba6afc9b4d) · [all pots](https://house-pot.onrender.com/history/all) · [video](https://house-pot.onrender.com/demo.mp4)
 
 <video src="https://house-pot.onrender.com/demo.mp4" controls width="100%" title="House Pot — kitchen walkthrough"></video>
 
@@ -65,9 +67,19 @@ Open-weight Gemma can plan on a machine we run. Validation stays in our repo. Th
 
 ## My Agent Sessions
 
+Public on DEV, oldest first. Both embeds are live.
+
+### Demo video, tech voiceover, and DEV submission sync
+
+{% agent_session 422 %}
+
+[Session 422](https://dev.to/agent_sessions/house-pot-demo-video-tech-voiceover-and-dev-submission-sync-xuczlj) — 7 curated turns.
+
+### Full HF26 build log (demo, ML, submission sync)
+
 {% agent_session 432 %}
 
-[Build log](https://dev.to/agent_sessions/house-pot-full-hf26-build-log-demo-ml-submission-sync-eezqug) (session **432**). Make **Public** on DEV so the embed works.
+[Session 432](https://dev.to/agent_sessions/house-pot-full-hf26-build-log-demo-ml-submission-sync-eezqug) — 22 curated turns.
 
 ---
 

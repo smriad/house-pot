@@ -24,9 +24,10 @@ const voDir = path.join(root, ".data", "demo-slideshow-vo");
 const ORDER = [
   { png: "01-kitchen-top.png", voiceId: "kitchen" },
   { png: "02-kitchen-form.png", voiceId: "form" },
-  { png: "03-integrations-dashboard.png", voiceId: "integrations" },
-  { png: "04-history-all.png", voiceId: "history_all" },
-  { png: "05-household-history.png", voiceId: "history_household" },
+  { png: "03-approved-recipe.png", voiceId: "recipe" },
+  { png: "04-integrations-dashboard.png", voiceId: "integrations" },
+  { png: "05-history-all.png", voiceId: "history_all" },
+  { png: "06-household-history.png", voiceId: "history_household" },
 ];
 
 const minSec = parseFloat(process.env.DEMO_SCREENSHOT_SEC ?? "2.5") || 2.5;

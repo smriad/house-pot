@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Capture kitchen + sponsor panel screenshots for README / SUBMISSION.
+ * Capture kitchen + service-panel screenshots from live (or BASE_URL).
  *   BASE_URL=https://house-pot.onrender.com npm run demo:screenshots
+ * Optional: DEMO_RUN_ID, DEMO_HOUSEHOLD_ID
  */
 import { chromium } from "@playwright/test";
 import fs from "fs";
@@ -11,15 +12,26 @@ import { loadEnvLocal } from "./lib/demo-env.mjs";
 loadEnvLocal();
 
 const BASE = process.env.BASE_URL?.trim() || "https://house-pot.onrender.com";
+const RUN_ID =
+  process.env.DEMO_RUN_ID?.trim() || "8073cda3-1865-4542-871b-5cba6afc9b4d";
+const HOUSEHOLD_ID =
+  process.env.DEMO_HOUSEHOLD_ID?.trim() ||
+  "d0a210b8-b20c-41a7-ac6a-b53601454da1";
 const outDir = path.join(process.cwd(), "public", "demo-screenshots");
 const VIEW_W = parseInt(process.env.DEMO_VIEWPORT_WIDTH ?? "1920", 10) || 1920;
 const VIEW_H = parseInt(process.env.DEMO_VIEWPORT_HEIGHT ?? "1080", 10) || 1080;
 
 fs.mkdirSync(outDir, { recursive: true });
 
-/** Drop stale per-card integration captures from older script versions. */
 for (const f of fs.readdirSync(outDir)) {
-  if (f.startsWith("05-integration-") || f === "03-integrations-collapsed.png") {
+  if (
+    f.startsWith("05-integration-") ||
+    f === "03-integrations-collapsed.png" ||
+    f === "04-integrations-header.png" ||
+    f === "04-history-all.png" ||
+    f === "06-history-all.png" ||
+    f === "07-household-history.png"
+  ) {
     fs.unlinkSync(path.join(outDir, f));
   }
 }
@@ -35,66 +47,90 @@ const context = await browser.newContext({
   viewport: { width: VIEW_W, height: VIEW_H },
   deviceScaleFactor: 1,
 });
+await context.addInitScript(
+  ({ householdId, runId }) => {
+    try {
+      localStorage.setItem("house-pot-household-id", householdId);
+      localStorage.setItem("house-pot-last-run-id", runId);
+    } catch {
+      /* ignore */
+    }
+  },
+  { householdId: HOUSEHOLD_ID, runId: RUN_ID },
+);
 const page = await context.newPage();
 
 try {
-  console.log("Capturing", BASE, "→", outDir);
+  const kitchenUrl = `${BASE}/?run=${RUN_ID}`;
+  console.log("Capturing", kitchenUrl, "→", outDir);
 
-  await page.goto(BASE, { waitUntil: "networkidle", timeout: 120_000 });
+  await page.goto(kitchenUrl, { waitUntil: "domcontentloaded", timeout: 120_000 });
+  await page
+    .getByRole("heading", { name: /Mild Eggplant and Potato Comfort Curry/i })
+    .waitFor({ state: "visible", timeout: 120_000 });
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(600);
   await shot(page, "01-kitchen-top");
 
-  await page.getByText("Pantry & voice notes", { exact: true }).scrollIntoViewIfNeeded();
+  const pantryBox = page.getByRole("textbox", { name: /Pantry & voice notes/i });
+  await pantryBox.fill(
+    "eggplant, potato, tomato, onion, garlic, turmeric, mustard oil, rice, coriander, green chili, eggs",
+  );
+  await page.getByRole("spinbutton", { name: /Diners/i }).fill("4");
+  await pantryBox.scrollIntoViewIfNeeded();
   await page.waitForTimeout(500);
   await shot(page, "02-kitchen-form");
 
+  const slip = page.getByRole("button", { name: /If shrimp slipped in/i });
+  await slip.scrollIntoViewIfNeeded();
+  await slip.click({ timeout: 15_000 });
+  const slipCopy = page.getByText(/Approve stays off/i);
+  await slipCopy.waitFor({ state: "visible", timeout: 15_000 });
+  await slipCopy.evaluate((el) => el.scrollIntoView({ block: "center", inline: "nearest" }));
+  await page.waitForTimeout(500);
+  await shot(page, "03-approved-recipe");
+
   const showBtn = page.getByRole("button", { name: /Show dashboard/i });
-  await showBtn.scrollIntoViewIfNeeded();
   await showBtn.click({ timeout: 15_000 });
   await page
     .getByRole("button", { name: /Hide dashboard/i })
     .waitFor({ state: "visible", timeout: 30_000 });
   await page
-    .getByText("Gemma", { exact: true })
-    .first()
+    .getByRole("heading", { name: "Gemma (open weights)" })
     .waitFor({ state: "visible", timeout: 90_000 })
     .catch(() => undefined);
   await page.waitForTimeout(2500);
 
-  const panel = page.locator("section").filter({ hasText: "Kitchen services" });
-  await panel.scrollIntoViewIfNeeded();
-  await page.evaluate(() => {
-    const el = [...document.querySelectorAll("section")].find((s) =>
-      s.textContent?.includes("Kitchen services"),
-    );
-    el?.scrollIntoView({ block: "start" });
-    window.scrollBy(0, -8);
-  });
+  await page
+    .getByRole("heading", { name: "Kitchen services" })
+    .evaluate((el) => el.scrollIntoView({ block: "start", inline: "nearest" }));
   await page.waitForTimeout(600);
-  const integrationsFile = path.join(outDir, "03-integrations-dashboard.png");
-  await page.screenshot({ path: integrationsFile });
-  console.log("  wrote", integrationsFile);
+  await shot(page, "04-integrations-dashboard");
 
-  const legacyHeader = path.join(outDir, "04-integrations-header.png");
-  if (fs.existsSync(legacyHeader)) fs.unlinkSync(legacyHeader);
+  const staleIntegrations = path.join(outDir, "03-integrations-dashboard.png");
+  if (fs.existsSync(staleIntegrations)) fs.unlinkSync(staleIntegrations);
 
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.goto(`${BASE}/history/all`, { waitUntil: "networkidle", timeout: 120_000 });
-  await page.waitForTimeout(1500);
-  await shot(page, "04-history-all");
+  await page.goto(`${BASE}/history/all`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+  await page.getByRole("heading", { name: /Mild Eggplant/i }).first().waitFor({
+    state: "visible",
+    timeout: 60_000,
+  });
+  await page.waitForTimeout(800);
+  await shot(page, "05-history-all");
 
-  await page.goto(`${BASE}/history?household=21679f68-19c2-42af-950d-890226540e46`, {
-    waitUntil: "networkidle",
+  await page.goto(`${BASE}/history?household=${HOUSEHOLD_ID}`, {
+    waitUntil: "domcontentloaded",
     timeout: 120_000,
   });
-  await page.waitForTimeout(1500);
-  await shot(page, "05-household-history");
+  await page.getByRole("heading", { name: /Mild Eggplant/i }).first().waitFor({
+    state: "visible",
+    timeout: 60_000,
+  });
+  await page.waitForTimeout(800);
+  await shot(page, "06-household-history");
 
-  const legacyHistory = path.join(outDir, "06-history-all.png");
-  const legacyHousehold = path.join(outDir, "07-household-history.png");
-  if (fs.existsSync(legacyHistory)) fs.unlinkSync(legacyHistory);
-  if (fs.existsSync(legacyHousehold)) fs.unlinkSync(legacyHousehold);
+  const staleHouseholdFive = path.join(outDir, "05-household-history.png");
+  if (fs.existsSync(staleHouseholdFive)) fs.unlinkSync(staleHouseholdFive);
 } finally {
   await browser.close();
 }
