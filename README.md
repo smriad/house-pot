@@ -21,8 +21,10 @@ Built for **Amma**, the cook in our Dhaka household: improvises from habit, keep
 | One dinner, not a feed | **Gemma** (`GEMMA_*`, OpenAI-compatible) returns one **JSON** recipe from pantry + allergies + diners (optional critic pass, cook brief) |
 | Safety you can see | **`pantry-check.ts`** marks in-kitchen vs missing; **blocks Approve** on allergen matches (e.g. shrimp → shellfish); Open Food Facts when available |
 | No surprise audio | **ElevenLabs** only after **Approve & read aloud**; approve and narrate **re-run** the same checks (idempotent narrate on retry) |
-| Memory across nights | **MongoDB Atlas** (or local `.data/house-pot.json`) for household, runs, feedback |
-| Hands at the stove | Browser speech, Scribe, or optional Whisper for pantry input; TTS gets **approved recipe text**, not the voice note |
+| Memory across nights | **MongoDB Atlas** (or local `.data/house-pot.json`) for household, runs, feedback; optional **vector search** on memories |
+| Hands at the stove | Browser speech, Scribe, or optional Whisper for pantry input; optional **Gemma pantry extract** after STT; TTS gets **approved recipe text**, not the voice note |
+| Learn from feedback | **`meal_fit_training`** rows (features + sentiment label) on `POST /api/runs/:id/feedback`; export with `npm run export:training` |
+| Smarter propose (optional) | **`PROPOSE_CANDIDATES`** (1–3): multiple Gemma drafts, rank with heuristic + TabPFN; **embedding allergen hints** are informational only |
 
 ## Architecture (summary)
 
@@ -41,6 +43,7 @@ Built for **Amma**, the cook in our Dhaka household: improvises from habit, keep
 | **One answer**, not a feed | “Don’t give me ten recipes.” | One JSON `Recipe` per run; critic may revise once | `gemma.ts`, `critic.ts` |
 | **No voice until I approve** | “I won’t listen until I tap approve.” | Status gate `awaiting_approval` → `approved` → `narrated`; TTS only after approve | `approve/route.ts`, `narrate/route.ts` |
 | **Remember our kitchen** across nights | “Less cumin next time.” | Household + `PantryMemory` + run history + feedback | `store.ts`, `POST /api/runs/:id/feedback` |
+| **Improve scoring over time** | “That fit score felt wrong.” | Feedback stores TabPFN-style features + label in `meal_fit_training` for offline export | `meal-fit-features.ts`, `insertMealFitTrainingRow` |
 | **Auditable** for family / judges | “Show me why approve was off.” | Ingredient marks on card; `KitchenRun.trace` per step | `GET /api/runs/:id/trace` |
 | **Demo without installing Ollama** | Judges on mobile data | Hosted `GEMMA_*` + Render; local Ollama path documented | `render.yaml`, health probes |
 
@@ -326,12 +329,15 @@ Layered deployment view (same logical flow as the [sequence diagram](#request-li
 | 2 | Memory | MongoDB pantry snippets + optional vector search; Backboard semantic hits |
 | 3 | SerpApi | Substitute hints when pantry text implies missing items |
 | 4 | TheMealDB | Public meal names as grounding (no API key) |
-| 5 | Gemma | Primary recipe proposal (`response_format: json_object`) |
+| 5 | Gemma (`propose-rank.ts`) | One or more recipe drafts (`PROPOSE_CANDIDATES`); rank by fit + pantry safety |
 | 6 | Open Food Facts | Allergen tags and macro hints per ingredient |
 | 7 | Gemma critic | Second pass; may rewrite recipe when review fails |
 | 8 | Pantry review | Code-level in-pantry / missing / allergen blocks |
+| 8b | `allergen-semantics.ts` | Optional embedding **near-miss hints** on the card (does not change `safeToNarrate`) |
 | 9 | TabPFN + heuristic | Blended friend-fit score (Python optional locally) |
 | 10 | Gemma brief | Optional one-sentence summary for the cook |
+| — | `pantry-extract.ts` | After `POST /api/transcribe`, Gemma may return `pantryLine` + `items` (disable: `EXTRACT_PANTRY_ON_TRANSCRIBE=false`) |
+| — | Feedback | Cook text → memory + **`meal_fit_training`** row for ML export |
 
 Approve and narrate paths re-run pantry safety checks. Temporal may execute durable narration when `TEMPORAL_ADDRESS` is set and reachable; Render defaults to in-process narration (`TEMPORAL_NARRATE=false` in `render.yaml`).
 
@@ -395,6 +401,16 @@ Hacktoberfest narrative and prize framing: [`SUBMISSION.md`](./SUBMISSION.md#tec
 | **Tiger Data (Postgres)** | Feedback mirror after runs | SQL sidecar experiments |
 | **`localStorage`** | Browser household id | No login; `?household=` for history |
 
+### ML & learning loop
+
+| Technology | How it's used | Why |
+| --- | --- | --- |
+| **`propose-rank.ts`** | `PROPOSE_CANDIDATES=2|3` → style hints, score, pick one winner | More intelligence without showing a recipe feed |
+| **`meal-fit-features.ts`** | Shared feature vector for TabPFN + training rows | One schema for scoring and feedback labels |
+| **`meal_fit_training` (Mongo)** | Written on feedback (`label` 0 / 0.5 / 1 from sentiment heuristics) | Export for TabPFN / sklearn experiments (`npm run export:training`) |
+| **`allergen-semantics.ts`** | Cosine similarity ingredient ↔ allergy | Extra “verify manually” hints; **policy stays in `pantry-check`** |
+| **`gemma/pantry-extract.ts`** | JSON pantry list from voice transcript | Cleaner pantry line before propose |
+
 ### Workflows, scoring, observability
 
 | Technology | How it's used | Why |
@@ -426,12 +442,13 @@ src/
   components/        HousePotApp, history, integrations dashboard
   lib/
     gemma.ts         LLM client, JSON extraction, kitchenChat helper
-    kitchen/         orchestrator, pantry-check, critic, free-food, shopping
-    db/              Mongo + local JSON store
+    gemma/           pantry-extract (STT → structured pantry)
+    kitchen/         orchestrator, pantry-check, propose-rank, allergen-semantics, meal-fit-features, critic, …
+    db/              Mongo + local JSON store (`meal_fit_training` collection)
     mastra/          Approval workflow
     durable/         Idempotent narration steps
     temporal/        Optional durable narration worker
-scripts/             live-stack, smoke-production, temporal-worker
+scripts/             seed-live-samples, prune-live-db, export-meal-fit-training, demo record, temporal-worker
 .github/workflows/   house-pot.yml, live-smoke.yml
 render.yaml          Render Blueprint (free web service)
 Dockerfile           Node + Python + Whisper (full-stack hosts)
@@ -473,6 +490,9 @@ cp .env.example .env.local
 | `TEMPORAL_ADDRESS` | Optional | Durable narration worker |
 | `TEMPORAL_NARRATE` | Optional | Set `false` to force in-process narrate |
 | `TABPFN_DISABLE` | Render | Set `true` to skip Python TabPFN on propose |
+| `PROPOSE_CANDIDATES` | Optional | `1`–`3` Gemma drafts + rank (default `1` on Render) |
+| `EXTRACT_PANTRY_ON_TRANSCRIBE` | Optional | Set `false` to skip Gemma pantry parse after Whisper |
+| `MONGODB_VECTOR_INDEX` | Optional | Atlas vector index name for memory search |
 | `BACKBOARD_*`, `TIGER_DATABASE_URL` | Optional | Extended memory mirrors |
 
 See `.env.example` for the full list and commented cloud examples.
@@ -486,13 +506,16 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:3000. The kitchen page stores `house-pot-household-id` in `localStorage`; history at `/history` lists runs for that household. Pass `?household=<uuid>` on `/history` to load another profile.
+Open http://localhost:3000. The kitchen page stores `house-pot-household-id` in `localStorage`; history at `/history` lists runs for that household; **`/history/all`** lists every run on the server (`GET /api/pots`). Pass `?household=<uuid>` on `/history` to load another profile.
 
 ```bash
-npm test          # unit tests (pantry-check, free-food, gemma JSON extract)
+npm test          # unit tests (pantry-check, free-food, gemma JSON extract, meal-fit labels)
 npm run lint
 npm run build
 npm run smoke:prod   # probes production /api/health (no secrets)
+npm run seed:live    # propose → approve → narrate samples on production (needs live URL)
+npm run prune:live   # keep only latest narrated Amma/Khalu/Farida in MongoDB
+npm run export:training  # dump meal_fit_training JSON (needs MONGODB_URI)
 ```
 
 Full sponsor stack locally:
@@ -515,6 +538,7 @@ npm run temporal:worker
 | `GET` | `/api/household?id=` | Fetch household by id |
 | `GET` | `/api/household/:id/runs` | List runs (`limit`, optional `runId`) |
 | `GET` | `/api/household/:id/memories` | Pantry memory snippets |
+| `GET` | `/api/pots` | All runs across households (`limit`, `skip`; list view, cached 30s) |
 | `POST` | `/api/runs` | Start propose pipeline (`householdId`, `pantryText`, `diners`) |
 | `GET` | `/api/runs/:id` | Fetch run |
 | `POST` | `/api/runs/:id/approve` | `{ approved, autoNarrate? }` |
@@ -522,7 +546,7 @@ npm run temporal:worker
 | `POST` | `/api/runs/:id/feedback` | Persist cook feedback to memory |
 | `GET` | `/api/runs/:id/trace` | Agent step trace |
 | `GET` | `/api/runs/:id/entire` | Entire-compatible export payload |
-| `POST` | `/api/transcribe` | Server-side Whisper (requires Python in image) |
+| `POST` | `/api/transcribe` | Whisper STT; may include `pantryLine`, `pantryItems`, `diners` when Gemma extract runs |
 
 Errors on approve/narrate return when pantry review marks allergens (`safeToNarrate: false`).
 
@@ -599,8 +623,9 @@ erDiagram
 ```
 
 - **Household** — cook name, allergies, dislikes, cuisines, notes (`householdSchema` in `types.ts`).
-- **KitchenRun** — `pantryText`, `diners`, `status` (`awaiting_approval` | `approved` | `narrated` | `failed`), `proposal` (`Recipe`), `pantryReview`, `kitchenBrain` (OFF, TheMealDB, critic metadata), `cookBrief`, `trace[]`, optional `audioBase64`, `mastraRunId`.
+- **KitchenRun** — `pantryText`, `diners`, `status` (`awaiting_approval` | `approved` | `narrated` | `failed`), `proposal` (`Recipe`), `pantryReview` (includes optional `semanticHints`), `kitchenBrain`, `cookBrief`, `alternateTitles` (when multi-propose), `preferenceScore`, `trace[]`, optional `audioBase64`, `mastraRunId`.
 - **PantryMemory** — post-run and feedback snippets; optional vector search when embeddings probe live.
+- **MealFitTrainingRow** — `meal_fit_training` collection: features, feedback text, sentiment `label`, `runId`, `householdId` (for offline ML).
 
 MongoDB database: **`house_pot`**. If `MONGODB_URI` is set but the cluster is unreachable, `store.ts` falls back to **`.data/house-pot.json`** so misconfigured Atlas does not hard-500 the demo.
 

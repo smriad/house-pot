@@ -30,9 +30,12 @@ Defaults: cook **Amma**, allergies **peanuts** and **shellfish**, pantry `red le
 | **`pantry-check.ts`** | In-kitchen vs missing; **blocks approve** on allergens—not “the model said it’s fine” |
 | **ElevenLabs** | TTS only on the **approved** card; approve/narrate **re-run** the same checks |
 | **MongoDB Atlas** | Household, runs, feedback (“less cumin next time”) |
-| **Whisper** (local) | Pantry dictation; narration never reads the raw voice note |
+| **Whisper** (local) | Pantry dictation; optional **Gemma pantry extract** after STT |
+| **ML loop** | TabPFN + heuristic friend-fit; feedback → `meal_fit_training` rows (`npm run export:training`) |
 
-**Design:** plan (Gemma) → policy (`pantry-check`) → deliver (TTS gated on approve). BRD, C4, and full tech tables: [README](https://github.com/smriad/house-pot).
+**Design:** plan (Gemma, optional multi-draft rank) → policy (`pantry-check` + embedding **hints only**) → deliver (TTS gated on approve). Full BRD, C4, ML tables: [README](https://github.com/smriad/house-pot).
+
+**ML (approve-first):** `PROPOSE_CANDIDATES` can ask Gemma for up to 3 drafts and pick one; semantic allergen near-misses show on the card but **never** replace code blocks. Cook feedback stores features for later TabPFN/sklearn export—not auto-retraining on Render.
 
 **Smoke run:** Gemma proposed **Mild Spinach and Red Lentil Dal with Rice**; every ingredient matched the pantry; audio waited for approve.
 
@@ -70,9 +73,9 @@ Same repo locally and live: my laptop runs Whisper, TabPFN, Temporal, Backboard/
 
 ## Code
 
-https://github.com/smriad/house-pot — `pantry-check.ts` (system of record), `orchestrator.ts`, `gemma.ts`, `store.ts`, `HousePotApp.tsx`, `render.yaml`.
+https://github.com/smriad/house-pot — `pantry-check.ts`, `orchestrator.ts`, `propose-rank.ts`, `meal-fit-features.ts`, `gemma/pantry-extract.ts`, `store.ts`, `HousePotApp.tsx`, `render.yaml`.
 
-**Stack in one line:** Gemma plans · code enforces pantry + allergens · MongoDB remembers · ElevenLabs speaks after approve · Playwright recorded `demo.mp4`. Per-sponsor how/why tables and production `/api/health` notes are in the README.
+**Stack in one line:** Gemma plans (optional rank) · code enforces pantry + allergens · MongoDB remembers + training export · ElevenLabs after approve · `/history/all` for judges · `demo.mp4` via Playwright.
 
 ## Why Does Open Innovation Matter?
 
@@ -86,7 +89,7 @@ Open-weight **Gemma** can plan on a machine we run; validation stays ours. The R
 
 - **Best Use of Gemma** — one pantry-constrained JSON recipe per night.
 - **Best Use of ElevenLabs** — narration only after approve.
-- **Best Use of MongoDB Atlas** — household memory on the live URL.
+- **Best Use of MongoDB Atlas** — household memory + `meal_fit_training` feedback rows on the live URL.
 - **Best Use of Render** — https://house-pot.onrender.com/ from `render.yaml`.
 
 ## My Agent Sessions
