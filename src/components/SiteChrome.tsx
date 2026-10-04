@@ -118,7 +118,7 @@ export function SiteFooter() {
         </a>
       </p>
       <p className="hp-container mt-2 font-mono text-[10px] tracking-wide text-hp-sage">
-        powered by MLH and DEV, presented by DigitalOcean
+        powered by MLH and DEV
       </p>
     </footer>
   );

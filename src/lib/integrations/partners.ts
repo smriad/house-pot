@@ -3,7 +3,6 @@ import path from "path";
 
 export type PartnerDeployStatus = {
   render: boolean;
-  digitalOcean: boolean;
   githubActions: boolean;
   entireExport: boolean;
 };
@@ -20,7 +19,6 @@ export async function getPartnerDeployStatus(): Promise<PartnerDeployStatus> {
   };
   return {
     render: await exists(path.join(root, "render.yaml")),
-    digitalOcean: await exists(path.join(root, ".do", "app.yaml")),
     githubActions: await exists(
       path.join(root, ".github", "workflows", "house-pot.yml"),
     ),

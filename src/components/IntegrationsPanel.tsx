@@ -18,7 +18,6 @@ type IntegrationStatus = {
   tiger: { configured: boolean; reachable: boolean };
   deploy: {
     render: boolean;
-    digitalOcean: boolean;
     githubActions: boolean;
     entireExport: boolean;
   };
@@ -169,12 +168,6 @@ function rowsFromStatus(s: IntegrationStatus): Row[] {
       track: "Featured · Render",
       ok: s.deploy.render,
       detail: s.deploy.render ? "render.yaml + /api/health" : "Missing render.yaml",
-    },
-    {
-      name: "DigitalOcean",
-      track: "Featured · DO",
-      ok: s.deploy.digitalOcean,
-      detail: s.deploy.digitalOcean ? ".do/app.yaml ready" : "Add App Platform spec",
     },
     {
       name: "GitHub Actions",

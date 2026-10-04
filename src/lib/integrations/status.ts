@@ -38,7 +38,6 @@ export type IntegrationStatus = {
   tiger: { configured: boolean; reachable: boolean };
   deploy: {
     render: boolean;
-    digitalOcean: boolean;
     githubActions: boolean;
     entireExport: boolean;
   };

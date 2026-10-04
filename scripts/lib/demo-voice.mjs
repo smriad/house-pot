@@ -25,7 +25,7 @@ export const TOUR_CHAPTERS = [
   {
     id: "integrations",
     text:
-      "Technology: sponsor integration dashboard. Where: Sponsor integrations at the bottom of the kitchen page, backed by GET slash api slash integrations. How used: local probes only—nothing is submitted from this panel. You see live or off for Gemma open weights, MongoDB Atlas, Backboard memory, ElevenLabs TTS and Scribe, Whisper, SerpApi, Mastra approval workflow, TabPFN friend-fit, Tiger Data Postgres mirror, Temporal, Sentry agent tracing, Ollama embeddings, TheMealDB, Open Food Facts, Render deploy, DigitalOcean app spec, GitHub Actions CI, and Entire JSON export per run. On Render, thirteen of eighteen probes are typically live; Temporal and Whisper stay local.",
+      "Technology: sponsor integration dashboard. Where: Sponsor integrations at the bottom of the kitchen page, backed by GET slash api slash integrations. How used: local probes only—nothing is submitted from this panel. You see live or off for Gemma open weights, MongoDB Atlas, Backboard memory, ElevenLabs TTS and Scribe, Whisper, SerpApi, Mastra approval workflow, TabPFN friend-fit, Tiger Data Postgres mirror, Temporal, Sentry agent tracing, Ollama embeddings, TheMealDB, Open Food Facts, Render deploy, GitHub Actions CI, and Entire JSON export per run. On Render, about twelve of seventeen probes are typically live; Temporal and Whisper stay local.",
   },
   {
     id: "mongodb_profile",
