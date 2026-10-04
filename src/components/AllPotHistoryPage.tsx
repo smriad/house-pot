@@ -90,7 +90,7 @@ export default function AllPotHistoryPage() {
           disabled={loading}
           className="hp-btn border-2 border-hp-cream bg-transparent text-hp-cream shadow-[3px_3px_0_0_rgb(242_242_235_/_0.45)] hover:bg-hp-cream/10 disabled:opacity-50"
         >
-          {loading ? "Refreshing…" : "Refresh"}
+          {loading && runs.length > 0 ? "Refreshing…" : "Refresh"}
         </button>
       </SiteHeader>
 

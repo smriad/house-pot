@@ -126,6 +126,39 @@ export async function getHousehold(id: string): Promise<Household | null> {
   return local.households.find((h) => h.id === id) ?? null;
 }
 
+export async function getHouseholdsByIds(
+  ids: string[],
+): Promise<Map<string, Household>> {
+  const unique = [...new Set(ids)];
+  const map = new Map<string, Household>();
+  if (unique.length === 0) return map;
+
+  if (await mongoReady()) {
+    const db = await getMongo();
+    const docs = await householdsCol(db)
+      .find({ id: { $in: unique } })
+      .toArray();
+    for (const h of docs) map.set(h.id, h);
+    return map;
+  }
+
+  const local = await readLocal();
+  for (const id of unique) {
+    const h = local.households.find((row) => row.id === id);
+    if (h) map.set(id, h);
+  }
+  return map;
+}
+
+/** Fields omitted when loading run lists (audio/trace are large). */
+const RUN_LIST_PROJECTION = {
+  audioBase64: 0,
+  trace: 0,
+  kitchenBrain: 0,
+  voiceTranscript: 0,
+  serpInspiration: 0,
+} as const;
+
 export async function saveRun(run: KitchenRun): Promise<void> {
   if (await mongoReady()) {
     const db = await getMongo();
@@ -172,11 +205,12 @@ export async function listRunsForHousehold(
 export async function listAllRuns(
   limit = 50,
   skip = 0,
+  options?: { listView?: boolean },
 ): Promise<KitchenRun[]> {
   if (await mongoReady()) {
     const db = await getMongo();
     return runsCol(db)
-      .find({})
+      .find({}, options?.listView ? { projection: RUN_LIST_PROJECTION } : {})
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)

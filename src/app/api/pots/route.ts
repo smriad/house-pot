@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getHousehold, listAllRuns } from "@/lib/db/store";
-import { summarizeRunForApi } from "@/lib/kitchen/run-summary";
+import { getHouseholdsByIds, listAllRuns } from "@/lib/db/store";
+import { summarizeRunForList } from "@/lib/kitchen/run-summary";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -13,21 +13,23 @@ export async function GET(req: Request) {
     Number.parseInt(url.searchParams.get("skip") ?? "0", 10) || 0,
   );
 
-  const runs = await listAllRuns(limit, skip);
+  const runs = await listAllRuns(limit, skip, { listView: true });
   const householdIds = [...new Set(runs.map((r) => r.householdId))];
-  const cookByHousehold = new Map<string, string>();
-  for (const id of householdIds) {
-    const h = await getHousehold(id);
-    cookByHousehold.set(id, h?.cookName ?? "Cook");
-  }
+  const households = await getHouseholdsByIds(householdIds);
 
-  return NextResponse.json({
+  const body = {
     runs: runs.map((r) => ({
-      ...summarizeRunForApi(r),
-      cookName: cookByHousehold.get(r.householdId) ?? "Cook",
+      ...summarizeRunForList(r),
+      cookName: households.get(r.householdId)?.cookName ?? "Cook",
     })),
     skip,
     limit,
     hasMore: runs.length === limit,
+  };
+
+  return NextResponse.json(body, {
+    headers: {
+      "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+    },
   });
 }
