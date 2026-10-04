@@ -71,10 +71,8 @@ function heuristicMealFit(
   memorySnippets: string[],
 ): TabpfnResult {
   const memoryText = memorySnippets.join(" ").toLowerCase();
-  const diners = recipe.servings;
   const allergies = household.allergies.length;
   const pantry_len = recipe.ingredients.length;
-  const steps = recipe.steps.length;
   const spicy = /chili|spicy|cayenne|hot sauce/i.test(
     `${recipe.title} ${recipe.summary}`,
   )

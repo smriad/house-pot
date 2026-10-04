@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 
 type IntegrationStatus = {
   gemma: { configured: boolean; live: boolean };
@@ -203,11 +203,11 @@ export default function IntegrationsPanel() {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
   const [loading, setLoading] = useState(false);
-  const [localDev, setLocalDev] = useState(false);
-
-  useEffect(() => {
-    setLocalDev(isLocalDevHost());
-  }, []);
+  const localDev = useSyncExternalStore(
+    () => () => {},
+    isLocalDevHost,
+    () => false,
+  );
 
   const refresh = useCallback(async () => {
     setLoading(true);
