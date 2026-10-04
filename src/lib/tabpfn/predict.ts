@@ -1,6 +1,7 @@
 import { execFile, spawn } from "child_process";
 import path from "path";
 import { promisify } from "util";
+import { buildMealFitFeatures } from "@/lib/kitchen/meal-fit-features";
 import type { Household, Recipe } from "@/lib/types";
 
 const execFileAsync = promisify(execFile);
@@ -102,19 +103,7 @@ export async function predictMealFit(
   if (!tabpfnReady) {
     return heuristicMealFit(household, recipe, memorySnippets);
   }
-  const memoryText = memorySnippets.join(" ").toLowerCase();
-  const features = {
-    diners: recipe.servings,
-    allergy_count: household.allergies.length,
-    pantry_token_count: recipe.ingredients.length,
-    step_count: recipe.steps.length,
-    spicy_flag: /chili|spicy|cayenne|hot sauce/i.test(
-      `${recipe.title} ${recipe.summary}`,
-    )
-      ? 1
-      : 0,
-    memory_positive: /loved|again|favorite|perfect/i.test(memoryText) ? 1 : 0,
-  };
+  const features = buildMealFitFeatures(household, recipe, memorySnippets);
 
   const script = path.join(process.cwd(), "scripts", "tabpfn_score.py");
   try {

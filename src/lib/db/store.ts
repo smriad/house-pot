@@ -3,15 +3,29 @@ import path from "path";
 import { randomUUID } from "crypto";
 import type { Collection, Db, MongoClient } from "mongodb";
 import type { Household, KitchenRun, PantryMemory } from "@/lib/types";
+import type { MealFitFeatures } from "@/lib/kitchen/meal-fit-features";
 import { hasMongo } from "@/lib/env";
 import { cosineSimilarity, embedText } from "@/lib/embeddings";
 
 const LOCAL_DIR = path.join(process.cwd(), ".data");
 
+export type MealFitTrainingRow = {
+  id: string;
+  runId: string;
+  householdId: string;
+  features: MealFitFeatures;
+  preferenceScore?: number;
+  feedbackText: string;
+  label: number;
+  recipeTitle?: string;
+  createdAt: string;
+};
+
 type LocalDb = {
   households: Household[];
   runs: KitchenRun[];
   memories: PantryMemoryDoc[];
+  mealFitTraining: MealFitTrainingRow[];
 };
 
 type PantryMemoryDoc = PantryMemory & { embedding?: number[] };
@@ -46,9 +60,15 @@ async function readLocal(): Promise<LocalDb> {
   const file = path.join(LOCAL_DIR, "house-pot.json");
   try {
     const raw = await fs.readFile(file, "utf8");
-    return JSON.parse(raw) as LocalDb;
+    const parsed = JSON.parse(raw) as Partial<LocalDb>;
+    return {
+      households: parsed.households ?? [],
+      runs: parsed.runs ?? [],
+      memories: parsed.memories ?? [],
+      mealFitTraining: parsed.mealFitTraining ?? [],
+    };
   } catch {
-    return { households: [], runs: [], memories: [] };
+    return { households: [], runs: [], memories: [], mealFitTraining: [] };
   }
 }
 
@@ -78,6 +98,10 @@ function runsCol(db: Db): Collection<KitchenRun> {
 
 function memoriesCol(db: Db): Collection<PantryMemoryDoc> {
   return db.collection<PantryMemoryDoc>("memories");
+}
+
+function trainingCol(db: Db): Collection<MealFitTrainingRow> {
+  return db.collection<MealFitTrainingRow>("meal_fit_training");
 }
 
 export async function upsertHousehold(
@@ -220,6 +244,25 @@ export async function listAllRuns(
   return [...local.runs]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(skip, skip + limit);
+}
+
+export async function insertMealFitTrainingRow(
+  row: Omit<MealFitTrainingRow, "id" | "createdAt">,
+): Promise<void> {
+  const doc: MealFitTrainingRow = {
+    ...row,
+    id: randomUUID(),
+    createdAt: new Date().toISOString(),
+  };
+  if (await mongoReady()) {
+    const db = await getMongo();
+    await trainingCol(db).insertOne(doc);
+    return;
+  }
+  const local = await readLocal();
+  if (!local.mealFitTraining) local.mealFitTraining = [];
+  local.mealFitTraining.push(doc);
+  await writeLocal(local);
 }
 
 export async function addPantryMemory(

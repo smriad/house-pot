@@ -13,6 +13,8 @@ export type PantryReview = {
   missing: string[];
   allergyHits: string[];
   safeToNarrate: boolean;
+  /** Embedding near-misses — informational only; does not change safeToNarrate. */
+  semanticHints?: string[];
 };
 
 const STAPLES = new Set(["salt", "water", "oil", "pepper"]);

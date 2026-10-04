@@ -88,6 +88,8 @@ export type KitchenRun = {
   /** LLM one-liner for the cook after propose (same GEMMA endpoint). */
   cookBrief?: string;
   cookFeedback?: string;
+  /** Other Gemma drafts when PROPOSE_CANDIDATES > 1 */
+  alternateTitles?: string[];
   trace: RunTraceEvent[];
   idempotencyKey: string;
   createdAt: string;

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { extractPantryFromTranscript } from "@/lib/gemma/pantry-extract";
 import { transcribeAudioBuffer } from "@/lib/whisper/transcribe";
 
 export const runtime = "nodejs";
@@ -22,7 +23,18 @@ export async function POST(req: Request) {
         { status: 503 },
       );
     }
-    return NextResponse.json({ text, engine });
+    const extract =
+      process.env.EXTRACT_PANTRY_ON_TRANSCRIBE !== "false"
+        ? await extractPantryFromTranscript(text)
+        : null;
+
+    return NextResponse.json({
+      text,
+      engine,
+      pantryLine: extract?.pantryLine,
+      pantryItems: extract?.items,
+      diners: extract?.diners,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Transcription failed";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -62,6 +62,11 @@ function RecipeCard({ recipe, review }: { recipe: Recipe; review: PantryReview }
           Allergy watch: {recipe.allergyWarnings.join(", ")}
         </p>
       )}
+      {review.semanticHints && review.semanticHints.length > 0 && (
+        <p className="mt-4 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2.5 text-sm text-amber-950">
+          ML near-miss check (verify manually): {review.semanticHints.join(" ")}
+        </p>
+      )}
       <div className="mt-4 grid gap-4 md:grid-cols-2 md:gap-5">
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wider text-hp-sage">
@@ -263,7 +268,14 @@ export default function HousePotApp() {
         }
         setVoiceTranscript(data.text);
         setLastTranscribeEngine(data.engine ?? null);
-        setPantry((p) => (p ? `${p}\n${data.text}` : data.text));
+        const line =
+          typeof data.pantryLine === "string" && data.pantryLine.trim()
+            ? data.pantryLine.trim()
+            : data.text;
+        setPantry((p) => (p ? `${p}\n${line}` : line));
+        if (typeof data.diners === "number" && data.diners >= 1) {
+          setDiners(data.diners);
+        }
       };
       setMediaRecorder(recorder);
       recorder.start();
@@ -660,6 +672,11 @@ export default function HousePotApp() {
                     Friend fit {run.preferenceScore}/100
                     {run.predictionSource ? ` · ${run.predictionSource}` : ""}
                     {run.fitReasons?.length ? ` — ${run.fitReasons.join("; ")}` : ""}
+                  </p>
+                )}
+                {run?.alternateTitles && run.alternateTitles.length > 0 && (
+                  <p className="text-hp-ink">
+                    Other Gemma drafts ranked lower: {run.alternateTitles.join(" · ")}
                   </p>
                 )}
                 {hasPlanningExtras && run.kitchenBrain && (

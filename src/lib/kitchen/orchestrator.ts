@@ -3,10 +3,12 @@ import {
   addPantryMemory,
   getHousehold,
   getRun,
+  insertMealFitTrainingRow,
   saveRun,
   searchMemories,
 } from "@/lib/db/store";
-import { proposeRecipe } from "@/lib/gemma";
+import { semanticAllergenHints } from "@/lib/kitchen/allergen-semantics";
+import { proposeWithRanking } from "@/lib/kitchen/propose-rank";
 import { findMealInspiration, findSubstitutes } from "@/lib/serp";
 import { narrateRecipe } from "@/lib/elevenlabs";
 import type { FoodFact, KitchenRun, RunTraceEvent } from "@/lib/types";
@@ -32,6 +34,10 @@ import { critiqueRecipe } from "@/lib/kitchen/critic";
 import { buildCookBrief } from "@/lib/kitchen/cook-brief";
 import { predictMealFit } from "@/lib/tabpfn/predict";
 import { mirrorMemoryToTiger } from "@/lib/tiger/memory";
+import {
+  buildMealFitFeatures,
+  feedbackSentimentLabel,
+} from "@/lib/kitchen/meal-fit-features";
 
 function applyFoodFacts(review: PantryReview, facts: FoodFact[], allergies: string[]): PantryReview {
   const hidden = hiddenAllergenHits(facts, allergies);
@@ -138,12 +144,9 @@ export async function startKitchenRun(input: {
 
   const mealIdeas = await runStep(run, "themealdb", () => fetchMealIdeas(input.pantryText));
 
-  let recipe = await runStep(run, "gemma-propose", () =>
-    proposeRecipe({
-      cookName: household.cookName,
-      allergies: household.allergies,
-      dislikes: household.dislikes,
-      cuisines: household.favoriteCuisines,
+  const ranked = await runStep(run, "gemma-propose", () =>
+    proposeWithRanking({
+      household,
       pantryText: input.pantryText,
       voiceTranscript: input.voiceTranscript,
       diners: input.diners,
@@ -153,6 +156,13 @@ export async function startKitchenRun(input: {
       publicRecipeIdeas: mealIdeas,
     }),
   );
+  let recipe = ranked.recipe;
+  if (ranked.alternateTitles.length) {
+    run.alternateTitles = ranked.alternateTitles;
+    run.trace.push(
+      trace("gemma-rank", `also considered: ${ranked.alternateTitles.join("; ")}`),
+    );
+  }
 
   let foodFacts = await runStep(run, "openfoodfacts", () =>
     lookupFoodFacts(recipe.ingredients.map((ingredient) => ingredient.item)),
@@ -162,6 +172,15 @@ export async function startKitchenRun(input: {
     foodFacts,
     household.allergies,
   );
+  const semanticHints = await runStep(run, "allergen-embed-hints", () =>
+    semanticAllergenHints(
+      recipe.ingredients.map((i) => i.item),
+      household.allergies,
+    ),
+  );
+  if (semanticHints.length) {
+    review = { ...review, semanticHints };
+  }
 
   const critique = await runStep(run, "gemma-critic", () =>
     critiqueRecipe({
@@ -182,6 +201,9 @@ export async function startKitchenRun(input: {
       foodFacts,
       household.allergies,
     );
+    if (semanticHints.length) {
+      review = { ...review, semanticHints };
+    }
   }
 
   const criticNotes = [...critique.notes];
@@ -381,5 +403,23 @@ export async function recordCookFeedback(
     source: "house-pot",
   });
   await mirrorMemoryToTiger(run.householdId, feedback);
+
+  const household = await getHousehold(run.householdId);
+  if (household && run.proposal) {
+    const memories = await searchMemories(household.id, run.pantryText);
+    const memorySnippets = memories.map((m) => m.text);
+    await insertMealFitTrainingRow({
+      runId: run.id,
+      householdId: run.householdId,
+      features: buildMealFitFeatures(household, run.proposal, memorySnippets),
+      preferenceScore: run.preferenceScore,
+      feedbackText: feedback,
+      label: feedbackSentimentLabel(feedback),
+      recipeTitle: run.proposal.title,
+    });
+    run.trace.push(trace("meal-fit-training", "feedback row stored"));
+    await saveRun(run);
+  }
+
   return run;
 }

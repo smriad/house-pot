@@ -62,6 +62,7 @@ export async function proposeRecipe(params: {
   substituteHints: string[];
   serpInspiration?: string[];
   publicRecipeIdeas?: string[];
+  styleHint?: string;
 }): Promise<Recipe> {
   const reachable = await probeGemma();
   if (!reachable && !isGemmaConfigured()) {
@@ -71,7 +72,12 @@ export async function proposeRecipe(params: {
   const model = process.env.GEMMA_MODEL?.trim() || "gemma3:4b";
   const openai = client();
 
+  const styleLine = params.styleHint
+    ? `Style for this draft: ${params.styleHint}.`
+    : "";
+
   const system = `You are House Pot, a kitchen agent for one household cook.
+${styleLine}
 Prefer ingredients named in the pantry. You may list something missing, but never include a listed allergen or a food made from one, including substitutes.
 Respond with a single JSON object only — no markdown fences, no <thought> tags, no prose before or after.
 Match schema fields: title, summary, servings, ingredients (item, amount, optional substitute), steps, allergyWarnings, openSourceRationale.
