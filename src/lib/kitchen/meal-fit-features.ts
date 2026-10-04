@@ -32,7 +32,8 @@ export function buildMealFitFeatures(
 /** Rough label for feedback → training rows (not ground truth). */
 export function feedbackSentimentLabel(feedback: string): number {
   const t = feedback.toLowerCase();
-  if (/loved|perfect|again|great|good|right|delicious|yes/.test(t)) return 1;
   if (/bad|hate|wrong|never|awful|too spicy|disaster/.test(t)) return 0;
+  if (/loved|perfect|great|good|right|delicious|yes/.test(t)) return 1;
+  if (/\bagain\b/.test(t) && !/never\s+again/.test(t)) return 1;
   return 0.5;
 }
