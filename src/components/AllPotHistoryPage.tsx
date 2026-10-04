@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Household, KitchenRun, RunStatus } from "@/lib/types";
+import type { RunStatus } from "@/lib/types";
 import { runStatusLabel } from "@/lib/kitchen/run-display";
-import { RunHistoryList } from "@/components/RunHistoryList";
+import { RunHistoryList, type RunHistoryListItem } from "@/components/RunHistoryList";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
-const STORAGE_KEY = "house-pot-household-id";
 const PAGE_SIZE = 50;
 
 const STATUS_FILTERS: Array<RunStatus | "all"> = [
@@ -18,21 +17,21 @@ const STATUS_FILTERS: Array<RunStatus | "all"> = [
   "failed",
 ];
 
-export default function RunHistoryPage() {
-  const [household, setHousehold] = useState<Household | null>(null);
-  const [runs, setRuns] = useState<KitchenRun[]>([]);
+export default function AllPotHistoryPage() {
+  const [runs, setRuns] = useState<RunHistoryListItem[]>([]);
   const [filter, setFilter] = useState<RunStatus | "all">("all");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRuns = useCallback(async (householdId: string, skip: number, append: boolean) => {
-    const rRes = await fetch(
-      `/api/household/${householdId}/runs?limit=${PAGE_SIZE}&skip=${skip}`,
-    );
-    if (!rRes.ok) throw new Error("Could not load run history");
-    const j = (await rRes.json()) as { runs: KitchenRun[]; hasMore: boolean };
+  const fetchPage = useCallback(async (skip: number, append: boolean) => {
+    const res = await fetch(`/api/pots?limit=${PAGE_SIZE}&skip=${skip}`);
+    if (!res.ok) throw new Error("Could not load pot history");
+    const j = (await res.json()) as {
+      runs: RunHistoryListItem[];
+      hasMore: boolean;
+    };
     setHasMore(j.hasMore);
     setRuns((prev) => (append ? [...prev, ...j.runs] : j.runs));
   }, []);
@@ -40,22 +39,8 @@ export default function RunHistoryPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const fromUrl = new URLSearchParams(window.location.search).get("household");
-    if (fromUrl?.trim()) {
-      localStorage.setItem(STORAGE_KEY, fromUrl.trim());
-    }
-    const householdId = fromUrl?.trim() || localStorage.getItem(STORAGE_KEY);
-    if (!householdId) {
-      setHousehold(null);
-      setRuns([]);
-      setHasMore(false);
-      setLoading(false);
-      return;
-    }
     try {
-      const hRes = await fetch(`/api/household?id=${encodeURIComponent(householdId)}`);
-      if (hRes.ok) setHousehold((await hRes.json()) as Household);
-      await fetchRuns(householdId, 0, false);
+      await fetchPage(0, false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Load failed");
       setRuns([]);
@@ -63,21 +48,19 @@ export default function RunHistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [fetchRuns]);
+  }, [fetchPage]);
 
   const loadMore = useCallback(async () => {
-    const householdId = localStorage.getItem(STORAGE_KEY);
-    if (!householdId) return;
     setLoadingMore(true);
     setError(null);
     try {
-      await fetchRuns(householdId, runs.length, true);
+      await fetchPage(runs.length, true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Load failed");
     } finally {
       setLoadingMore(false);
     }
-  }, [fetchRuns, runs.length]);
+  }, [fetchPage, runs.length]);
 
   useEffect(() => {
     const id = window.setTimeout(() => void load(), 0);
@@ -92,14 +75,14 @@ export default function RunHistoryPage() {
   return (
     <div className="hp-page">
       <SiteHeader
-        title="Pot history"
-        subtitle="Every propose → approve → narrate run for your household, newest first."
+        title="All pot history"
+        subtitle="Every propose → approve → narrate run across all households on this server, newest first."
       >
-        <Link href="/history/all" className="hp-btn-gold">
-          All households
+        <Link href="/history" className="hp-btn-gold">
+          My household
         </Link>
         <Link href="/" className="hp-btn border-2 border-hp-cream bg-transparent text-hp-cream shadow-[3px_3px_0_0_rgb(242_242_235_/_0.45)] hover:bg-hp-cream/10">
-          Back to kitchen
+          Kitchen
         </Link>
         <button
           type="button"
@@ -112,29 +95,12 @@ export default function RunHistoryPage() {
       </SiteHeader>
 
       <main className="hp-container max-w-4xl flex-1 py-8 sm:py-10">
-        {!loading && !household && runs.length === 0 && (
-          <p className="hp-empty">
-            No household saved in this browser yet.{" "}
-            <Link href="/" className="font-semibold text-hp-sage underline">
-              Open the kitchen
-            </Link>{" "}
-            and save a profile (propose once), or open history with{" "}
-            <code className="text-xs">?household=&lt;id&gt;</code> from a shared link. You can also browse{" "}
-            <Link href="/history/all" className="font-semibold text-hp-sage underline">
-              all pot history
-            </Link>{" "}
-            on this server.
-          </p>
-        )}
-
-        {household && (
-          <p className="mb-6 font-mono text-sm text-hp-sage">
-            Cooking for <span className="font-semibold text-hp-sage-deep">{household.cookName}</span>
-            {" · "}
-            {runs.length} run{runs.length === 1 ? "" : "s"} loaded
-            {hasMore ? " · more available" : ""}
-          </p>
-        )}
+        <p className="mb-6 font-mono text-sm text-hp-sage">
+          {loading && runs.length === 0
+            ? "Loading…"
+            : `${runs.length} run${runs.length === 1 ? "" : "s"} loaded`}
+          {hasMore ? " · more available" : ""}
+        </p>
 
         <div className="mb-6 flex flex-wrap gap-2" role="tablist" aria-label="Filter by status">
           {STATUS_FILTERS.map((s) => (
@@ -156,22 +122,29 @@ export default function RunHistoryPage() {
         </div>
 
         {error && (
-          <p className="mb-4 rounded-xl border border-hp-blush/40 bg-hp-blush/15 px-3 py-2.5 text-sm text-[#671912]" role="alert">
+          <p
+            className="mb-4 rounded-xl border border-hp-blush/40 bg-hp-blush/15 px-3 py-2.5 text-sm text-[#671912]"
+            role="alert"
+          >
             {error}
           </p>
         )}
 
         {loading && runs.length === 0 && (
-          <p className="text-center text-sm text-zinc-500">Loading history…</p>
+          <p className="text-center text-sm text-zinc-500">Loading all pots…</p>
         )}
 
-        {!loading && filtered.length === 0 && household && (
+        {!loading && filtered.length === 0 && runs.length > 0 && (
           <p className="text-center text-sm text-zinc-500">No runs match this filter.</p>
         )}
 
-        <RunHistoryList runs={filtered} />
+        {!loading && runs.length === 0 && !error && (
+          <p className="hp-empty">No runs on this server yet. Propose a pot from the kitchen first.</p>
+        )}
 
-        {hasMore && filter === "all" && household && (
+        <RunHistoryList runs={filtered} showHousehold />
+
+        {hasMore && filter === "all" && (
           <div className="mt-8 flex justify-center">
             <button
               type="button"
@@ -182,6 +155,12 @@ export default function RunHistoryPage() {
               {loadingMore ? "Loading…" : "Load more"}
             </button>
           </div>
+        )}
+
+        {hasMore && filter !== "all" && (
+          <p className="mt-6 text-center text-xs text-zinc-500">
+            Load more uses unfiltered pages—switch to <strong>All</strong> to fetch older runs.
+          </p>
         )}
       </main>
       <SiteFooter />

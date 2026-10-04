@@ -210,13 +210,13 @@ MongoDB holds what she would otherwise repeat at every family lunch: allergies, 
 - **Best Use of MongoDB Atlas** — household memory across nights in Dhaka and on the live URL.
 - **Best Use of Render** — https://house-pot.onrender.com/ from `render.yaml`.
 
-## My Agent Session
+## My Agent Sessions
 
-Curated build log: Playwright `demo.mp4` pipeline, per-chapter tech voiceover (technology / where / how), Bangladesh-style narrator, and syncing this submission draft to DEV.
+Full curated build log (all messages in this session — make **Public** on DEV so judges can open the embed):
 
 {% agent_session 422 %}
 
-Session on DEV: [House Pot — demo video, tech voiceover, and submission sync](https://dev.to/agent_sessions/house-pot-demo-video-tech-voiceover-and-dev-submission-sync-xuczlj)
+- [House Pot — demo video, tech voiceover, and DEV submission sync](https://dev.to/agent_sessions/house-pot-demo-video-tech-voiceover-and-dev-submission-sync-xuczlj) — session **422** (Playwright `demo.mp4`, tech voiceover chapters, submission sync)
 
 ## Friend quote
 

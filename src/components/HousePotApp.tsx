@@ -280,9 +280,12 @@ export default function HousePotApp() {
   };
 
   const startListening = () => {
+    setError(null);
     const SR = getSpeechRecognition();
     if (!SR) {
-      setError("Speech recognition is not available in this browser. Type pantry notes instead.");
+      setError(
+        "Browser speech is not available here (try Chrome/Edge on HTTPS or localhost). Use Record pantry or type instead.",
+      );
       return;
     }
     const rec = new SR();
@@ -290,14 +293,37 @@ export default function HousePotApp() {
     rec.interimResults = true;
     rec.continuous = false;
     rec.onresult = (ev) => {
-      const text = ev.results[0][0].transcript;
+      const text = ev.results[0]?.[0]?.transcript?.trim();
+      if (!text) return;
       setVoiceTranscript(text);
       setPantry((p) => (p ? `${p}\n${text}` : text));
+      setError(null);
     };
-    rec.onerror = () => setError("Could not capture voice. Try again or type manually.");
+    rec.onerror = (ev) => {
+      const code = ev.error;
+      if (code === "not-allowed" || code === "service-not-allowed") {
+        setError(
+          "Microphone blocked for browser speech. Allow the mic in browser settings, or use Record pantry (Whisper) / type instead.",
+        );
+      } else if (code === "no-speech") {
+        setError("No speech heard. Try again, or use Record pantry / type your pantry list.");
+      } else if (code === "aborted") {
+        setError(null);
+      } else {
+        setError(
+          `Browser speech failed (${code}). Use Record pantry for local Whisper, or type manually.`,
+        );
+      }
+      setListening(false);
+    };
     rec.onend = () => setListening(false);
     setListening(true);
-    rec.start();
+    try {
+      rec.start();
+    } catch {
+      setListening(false);
+      setError("Could not start browser speech. Use Record pantry or type instead.");
+    }
   };
 
   const proposeMeal = async () => {

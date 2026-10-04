@@ -54,6 +54,9 @@ export function SiteHeader({ title, subtitle, children, compact }: SiteHeaderPro
             <Link href="/history" className="hp-nav-link">
               History
             </Link>
+            <Link href="/history/all" className="hp-nav-link">
+              All pots
+            </Link>
             <a
               href="https://github.com/smriad/house-pot"
               className="hp-nav-link"

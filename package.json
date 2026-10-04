@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "tsx --test src/lib/kitchen/pantry-check.test.ts src/lib/kitchen/free-food.test.ts src/lib/gemma-extract.test.ts",
     "smoke:prod": "bash scripts/smoke-production.sh",
+    "seed:live": "node scripts/seed-live-samples.mjs",
     "temporal:worker": "tsx scripts/temporal-worker.ts",
     "temporal:up": "docker compose -f docker-compose.temporal.yml up -d",
     "stack:up": "bash scripts/live-stack.sh",

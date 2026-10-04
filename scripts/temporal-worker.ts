@@ -9,7 +9,20 @@ loadEnv({ path: path.join(__dirname, "../.env.local") });
 
 async function main() {
   const address = process.env.TEMPORAL_ADDRESS?.trim() || "localhost:7233";
-  const connection = await NativeConnection.connect({ address });
+  let connection: NativeConnection;
+  try {
+    connection = await NativeConnection.connect({
+      address,
+      connectTimeout: 5000,
+    });
+  } catch {
+    console.error(
+      `Cannot reach Temporal at ${address} (connection refused).\n` +
+        "  Start server: npm run temporal:up\n" +
+        "  Or stop this worker and unset TEMPORAL_ADDRESS in .env.local if you are not using Temporal.",
+    );
+    process.exit(1);
+  }
   const worker = await Worker.create({
     connection,
     namespace: process.env.TEMPORAL_NAMESPACE?.trim() || "default",
